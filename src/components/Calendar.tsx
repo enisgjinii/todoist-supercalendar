@@ -80,7 +80,13 @@ export const Calendar = ({ token, projects, selectedProjectId }: CalendarProps) 
             }}
           />
         </Card>
-        <TaskList date={selected} tasks={tasks || []} isLoading={isLoading} projects={projects} />
+        <TaskList 
+          date={selected} 
+          tasks={tasks || []} 
+          isLoading={isLoading} 
+          projects={projects}
+          token={token}  // Added token prop
+        />
       </div>
     </div>
   );
