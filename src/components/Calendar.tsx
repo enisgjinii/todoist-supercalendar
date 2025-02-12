@@ -16,7 +16,7 @@ interface CalendarProps {
 
 export const Calendar = ({ token, projects }: CalendarProps) => {
   const [selected, setSelected] = useState<Date>(new Date());
-  const { tasks, isLoading } = useTasks(token, selected);
+  const { data: tasks, isLoading } = useTasks(token, selected);
 
   return (
     <div className="p-8">
@@ -57,7 +57,7 @@ export const Calendar = ({ token, projects }: CalendarProps) => {
             }}
           />
         </Card>
-        <TaskList date={selected} tasks={tasks} isLoading={isLoading} projects={projects} />
+        <TaskList date={selected} tasks={tasks || []} isLoading={isLoading} projects={projects} />
       </div>
     </div>
   );
