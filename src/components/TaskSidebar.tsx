@@ -2,44 +2,127 @@
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Folder, Hash, LayoutGrid, List } from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface TaskSidebarProps {
   projects: any[];
   isLoading: boolean;
+  onProjectSelect?: (projectId: string | null) => void;
+  selectedProjectId?: string | null;
 }
 
-export const TaskSidebar = ({ projects, isLoading }: TaskSidebarProps) => {
+export const TaskSidebar = ({ 
+  projects, 
+  isLoading, 
+  onProjectSelect,
+  selectedProjectId 
+}: TaskSidebarProps) => {
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+
   return (
-    <div className="w-64 border-r border-zinc-200 bg-white/50 backdrop-blur-sm">
-      <div className="p-4">
-        <h2 className="text-lg font-semibold mb-4">Projects</h2>
-        <ScrollArea className="h-[calc(100vh-8rem)]">
-          {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-8 w-full" />
-              ))}
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-2"
+    <motion.div 
+      initial={{ width: 0, opacity: 0 }}
+      animate={{ width: 280, opacity: 1 }}
+      className="border-r border-zinc-200 bg-white/50 backdrop-blur-sm flex flex-col h-screen"
+    >
+      <div className="p-4 border-b border-zinc-200">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Projects</h2>
+          <div className="flex gap-1">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setViewMode('grid')}
+              className={cn(
+                "p-2 rounded-md transition-colors",
+                viewMode === 'grid' ? "bg-zinc-100" : "hover:bg-zinc-50"
+              )}
             >
-              {projects?.map((project) => (
-                <motion.div
-                  key={project.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="p-2 rounded-md hover:bg-zinc-100 cursor-pointer transition-colors"
-                >
-                  <span className="text-sm text-zinc-700">{project.name}</span>
-                </motion.div>
-              ))}
-            </motion.div>
+              <LayoutGrid size={16} />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setViewMode('list')}
+              className={cn(
+                "p-2 rounded-md transition-colors",
+                viewMode === 'list' ? "bg-zinc-100" : "hover:bg-zinc-50"
+              )}
+            >
+              <List size={16} />
+            </motion.button>
+          </div>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onProjectSelect?.(null)}
+          className={cn(
+            "w-full p-2 rounded-md text-left flex items-center gap-2 mb-2 transition-colors",
+            !selectedProjectId ? "bg-zinc-100" : "hover:bg-zinc-50"
           )}
-        </ScrollArea>
+        >
+          <Hash size={16} />
+          <span className="text-sm">All Tasks</span>
+        </motion.button>
       </div>
-    </div>
+      <ScrollArea className="flex-1 p-4">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className={cn(
+              "gap-3",
+              viewMode === 'grid' ? "grid grid-cols-2" : "space-y-2"
+            )}
+          >
+            {projects?.map((project) => (
+              <motion.button
+                key={project.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onProjectSelect?.(project.id)}
+                className={cn(
+                  "w-full p-3 rounded-lg border transition-all",
+                  selectedProjectId === project.id 
+                    ? "border-zinc-300 bg-zinc-50" 
+                    : "border-zinc-200 hover:border-zinc-300"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <Folder size={16} className="mt-0.5 text-zinc-500" />
+                  <div className="flex-1 text-left">
+                    <h3 className="text-sm font-medium text-zinc-900 mb-1">
+                      {project.name}
+                    </h3>
+                    <div className="flex gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {project.view_style || 'List'}
+                      </Badge>
+                      {project.is_favorite && (
+                        <Badge variant="secondary" className="text-xs">
+                          Favorite
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </ScrollArea>
+    </motion.div>
   );
 };

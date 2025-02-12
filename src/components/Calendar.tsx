@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -12,16 +12,39 @@ import { TaskList } from "./TaskList";
 interface CalendarProps {
   token: string;
   projects: any[];
+  selectedProjectId: string | null;
 }
 
-export const Calendar = ({ token, projects }: CalendarProps) => {
+export const Calendar = ({ token, projects, selectedProjectId }: CalendarProps) => {
   const [selected, setSelected] = useState<Date>(new Date());
-  const { data: tasks, isLoading } = useTasks(token, selected);
+  const { data: tasks, isLoading } = useTasks(token, selected, selectedProjectId);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        setSelected(prev => {
+          const newDate = new Date(prev);
+          newDate.setDate(prev.getDate() - 1);
+          return newDate;
+        });
+      } else if (e.key === 'ArrowRight') {
+        setSelected(prev => {
+          const newDate = new Date(prev);
+          newDate.setDate(prev.getDate() + 1);
+          return newDate;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <div className="p-8">
       <div className="flex flex-col md:flex-row gap-8">
-        <Card className="p-4 backdrop-blur-sm bg-white/90">
+        <Card className="p-4 backdrop-blur-sm bg-white/90 shadow-sm">
           <DayPicker
             mode="single"
             selected={selected}

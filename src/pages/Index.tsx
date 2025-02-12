@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [token, setToken] = useState(() => localStorage.getItem("todoistToken") || "");
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const { data: projects, isLoading: projectsLoading } = useProjects(token);
 
   return (
@@ -21,9 +22,18 @@ const Index = () => {
         </div>
       ) : (
         <div className="flex h-screen overflow-hidden">
-          <TaskSidebar projects={projects || []} isLoading={projectsLoading} />
+          <TaskSidebar 
+            projects={projects || []} 
+            isLoading={projectsLoading}
+            onProjectSelect={setSelectedProjectId}
+            selectedProjectId={selectedProjectId}
+          />
           <main className="flex-1 overflow-y-auto">
-            <Calendar token={token} projects={projects || []} />
+            <Calendar 
+              token={token} 
+              projects={projects || []} 
+              selectedProjectId={selectedProjectId}
+            />
           </main>
         </div>
       )}
