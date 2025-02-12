@@ -26,11 +26,11 @@ export const TaskSidebar = ({
     <motion.div 
       initial={{ width: 0, opacity: 0 }}
       animate={{ width: 280, opacity: 1 }}
-      className="border-r border-zinc-200 dark:border-zinc-800 glass-morphism flex flex-col h-screen"
+      className="border-r border-zinc-200 bg-white/50 backdrop-blur-sm flex flex-col h-screen"
     >
-      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="p-4 border-b border-zinc-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold font-poppins">Projects</h2>
+          <h2 className="text-lg font-semibold">Projects</h2>
           <div className="flex gap-1">
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -38,7 +38,7 @@ export const TaskSidebar = ({
               onClick={() => setViewMode('grid')}
               className={cn(
                 "p-2 rounded-md transition-colors",
-                viewMode === 'grid' ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                viewMode === 'grid' ? "bg-zinc-100" : "hover:bg-zinc-50"
               )}
             >
               <LayoutGrid size={16} />
@@ -49,7 +49,7 @@ export const TaskSidebar = ({
               onClick={() => setViewMode('list')}
               className={cn(
                 "p-2 rounded-md transition-colors",
-                viewMode === 'list' ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                viewMode === 'list' ? "bg-zinc-100" : "hover:bg-zinc-50"
               )}
             >
               <List size={16} />
@@ -61,8 +61,8 @@ export const TaskSidebar = ({
           whileTap={{ scale: 0.98 }}
           onClick={() => onProjectSelect?.(null)}
           className={cn(
-            "w-full p-2 rounded-md text-left flex items-center gap-2 mb-2 transition-colors font-poppins",
-            !selectedProjectId ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+            "w-full p-2 rounded-md text-left flex items-center gap-2 mb-2 transition-colors",
+            !selectedProjectId ? "bg-zinc-100" : "hover:bg-zinc-50"
           )}
         >
           <Hash size={16} />
@@ -73,7 +73,7 @@ export const TaskSidebar = ({
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full dark:bg-zinc-800" />
+              <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
         ) : (
@@ -94,16 +94,16 @@ export const TaskSidebar = ({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onProjectSelect?.(project.id)}
                 className={cn(
-                  "w-full p-3 rounded-lg border transition-all font-poppins",
+                  "w-full p-3 rounded-lg border transition-all",
                   selectedProjectId === project.id 
-                    ? "border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800" 
-                    : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
+                    ? "border-zinc-300 bg-zinc-50" 
+                    : "border-zinc-200 hover:border-zinc-300"
                 )}
               >
                 <div className="flex items-start gap-3">
                   <Folder size={16} className="mt-0.5 text-zinc-500" />
                   <div className="flex-1 text-left">
-                    <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1">
+                    <h3 className="text-sm font-medium text-zinc-900 mb-1">
                       {project.name}
                     </h3>
                     <div className="flex gap-2">
