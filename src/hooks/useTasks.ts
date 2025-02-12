@@ -7,7 +7,7 @@ async function fetchTasks(token: string, date: Date, projectId: string | null) {
   
   const formattedDate = format(date, "yyyy-MM-dd");
   const filter = projectId 
-    ? `due:${formattedDate} & project_id=${projectId}`
+    ? `due:${formattedDate} & #project_id=${projectId}` // Changed syntax to use # for project_id
     : `due:${formattedDate}`;
     
   const response = await fetch(`https://api.todoist.com/rest/v2/tasks?filter=${encodeURIComponent(filter)}`, {
