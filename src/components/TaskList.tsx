@@ -1,4 +1,3 @@
-
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
@@ -291,7 +290,14 @@ const TaskItem = ({ task, project, token, isSubtask = false }: { task: any; proj
               </motion.div>
             )}
           </AnimatePresence>
-          {!isSubtask && <SubTaskList tasks={task} parentId={task.id} project={project} token={token} />}
+          {!isSubtask && (
+            <SubTaskList 
+              tasks={tasks} 
+              parentId={task.id}
+              project={project}
+              token={token}
+            />
+          )}
         </div>
       </div>
     </motion.div>
