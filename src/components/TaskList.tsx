@@ -17,6 +17,11 @@ import {
   Tag,
   Calendar,
   Star,
+  Bookmark,
+  Flag,
+  MoreHorizontal,
+  ArrowRight,
+  List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -28,6 +33,14 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TaskListProps {
   date: Date;
@@ -57,7 +70,27 @@ const getRelativeDate = (date: Date) => {
   return format(date, "MMM d, yyyy");
 };
 
-const TaskItem = ({ task, project, token }: { task: any; project: any; token: string }) => {
+const SubTaskList = ({ tasks, parentId, project, token }: { tasks: any[]; parentId: string; project: any; token: string }) => {
+  const subtasks = tasks.filter(task => task.parent_id === parentId);
+  
+  if (!subtasks.length) return null;
+  
+  return (
+    <div className="ml-8 mt-4 space-y-4 border-l-2 border-zinc-200 dark:border-zinc-700 pl-4">
+      {subtasks.map(task => (
+        <TaskItem 
+          key={task.id} 
+          task={task} 
+          project={project}
+          token={token}
+          isSubtask
+        />
+      ))}
+    </div>
+  );
+};
+
+const TaskItem = ({ task, project, token, isSubtask = false }: { task: any; project: any; token: string; isSubtask?: boolean }) => {
   const [expanded, setExpanded] = useState(false);
   const { data: comments, isLoading: commentsLoading } = useTaskComments(token, task.id);
   const { data: labels } = useLabels(token);
@@ -92,36 +125,47 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <h3 className={cn(
-                    "font-medium break-words cursor-help",
-                    task.is_completed ? "text-zinc-500 dark:text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-100"
-                  )}>
-                    {task.content}
-                  </h3>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-80">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-sm">Created {format(new Date(task.created_at), "PPP")}</span>
-                    </div>
-                    {project && (
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                {isSubtask && (
+                  <ArrowRight size={16} className="text-zinc-400 dark:text-zinc-500" />
+                )}
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <h3 className={cn(
+                      "font-medium break-words cursor-help",
+                      task.is_completed ? "text-zinc-500 dark:text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-100"
+                    )}>
+                      {task.content}
+                    </h3>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-80">
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4" />
-                        <span className="text-sm">Project: {project.name}</span>
+                        <Calendar className="h-4 w-4" />
+                        <span className="text-sm">Created {format(new Date(task.created_at), "PPP")}</span>
                       </div>
-                    )}
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
+                      {project && (
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4" />
+                          <span className="text-sm">Project: {project.name}</span>
+                        </div>
+                      )}
+                      {task.description && (
+                        <div className="flex items-center gap-2">
+                          <List className="h-4 w-4" />
+                          <span className="text-sm">Has description</span>
+                        </div>
+                      )}
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
               {task.description && (
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{task.description}</p>
               )}
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2">
               <Badge variant="outline" className={cn(
                 "text-xs",
                 getPriorityColor(task.priority)
@@ -134,12 +178,38 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
                   {format(new Date(task.due.datetime), "HH:mm")}
                 </Badge>
               )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Task Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Flag className="h-4 w-4 mr-2" />
+                    Set Priority
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Bookmark className="h-4 w-4 mr-2" />
+                    Add to Favorites
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <LinkIcon className="h-4 w-4 mr-2" />
+                    Copy Link
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           <div className="mt-2 flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className="text-xs">
-              {project?.name}
-            </Badge>
+            {project && (
+              <Badge variant="secondary" className="text-xs">
+                <Star size={12} className="mr-1" />
+                {project.name}
+              </Badge>
+            )}
             {task.labels?.map((labelId: string) => {
               const label = labels?.find((l: any) => l.name === labelId);
               return (
@@ -221,6 +291,7 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
               </motion.div>
             )}
           </AnimatePresence>
+          {!isSubtask && <SubTaskList tasks={task} parentId={task.id} project={project} token={token} />}
         </div>
       </div>
     </motion.div>
@@ -228,6 +299,9 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
 };
 
 export const TaskList = ({ date, tasks, isLoading, projects, token }: TaskListProps) => {
+  // Filter out subtasks from the main list
+  const mainTasks = tasks.filter(task => !task.parent_id);
+
   return (
     <Card className="flex-1 p-6 backdrop-blur-sm bg-white/90 dark:bg-zinc-900/90">
       <div className="flex items-center justify-between mb-6">
@@ -251,14 +325,14 @@ export const TaskList = ({ date, tasks, isLoading, projects, token }: TaskListPr
               <Skeleton key={i} className="h-24 w-full" />
             ))}
           </div>
-        ) : tasks?.length ? (
+        ) : mainTasks?.length ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="space-y-4"
           >
-            {tasks.map((task) => (
+            {mainTasks.map((task) => (
               <TaskItem 
                 key={task.id} 
                 task={task} 
