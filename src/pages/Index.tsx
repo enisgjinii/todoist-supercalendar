@@ -19,14 +19,13 @@ const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const Navbar = () => (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800">
+    <nav className="fixed top-0 left-0 right-0 z-50 glass-morphism">
       <div className="flex items-center justify-between px-4 h-16">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="lg:hidden"
           >
             {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
@@ -72,7 +71,7 @@ const Index = () => {
   );
 
   const Footer = () => (
-    <footer className="fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg border-t border-zinc-200 dark:border-zinc-800">
+    <footer className="fixed bottom-0 left-0 right-0 z-40 glass-morphism">
       <div className="flex items-center justify-between px-4 h-12">
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Built with ❤️ using React & Todoist API
@@ -109,7 +108,7 @@ const Index = () => {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -280, opacity: 0 }}
                 transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                className="fixed inset-y-16 left-0 z-30 w-[280px] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg border-r border-zinc-200 dark:border-zinc-800"
+                className="fixed inset-y-16 left-0 z-30 w-[280px] glass-morphism"
               >
                 <ScrollArea className="h-full">
                   <TaskSidebar 
