@@ -1,3 +1,4 @@
+
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
@@ -49,6 +50,14 @@ interface TaskListProps {
   token: string;
 }
 
+interface TaskItemProps {
+  task: any;
+  project: any;
+  token: string;
+  isSubtask?: boolean;
+  allTasks: any[]; // Add this prop
+}
+
 const getPriorityColor = (priority: number) => {
   switch (priority) {
     case 4:
@@ -83,13 +92,14 @@ const SubTaskList = ({ tasks, parentId, project, token }: { tasks: any[]; parent
           project={project}
           token={token}
           isSubtask
+          allTasks={tasks}
         />
       ))}
     </div>
   );
 };
 
-const TaskItem = ({ task, project, token, isSubtask = false }: { task: any; project: any; token: string; isSubtask?: boolean }) => {
+const TaskItem = ({ task, project, token, isSubtask = false, allTasks }: TaskItemProps) => {
   const [expanded, setExpanded] = useState(false);
   const { data: comments, isLoading: commentsLoading } = useTaskComments(token, task.id);
   const { data: labels } = useLabels(token);
@@ -292,7 +302,7 @@ const TaskItem = ({ task, project, token, isSubtask = false }: { task: any; proj
           </AnimatePresence>
           {!isSubtask && (
             <SubTaskList 
-              tasks={tasks} 
+              tasks={allTasks}
               parentId={task.id}
               project={project}
               token={token}
@@ -341,9 +351,10 @@ export const TaskList = ({ date, tasks, isLoading, projects, token }: TaskListPr
             {mainTasks.map((task) => (
               <TaskItem 
                 key={task.id} 
-                task={task} 
+                task={task}
                 project={projects.find((p) => p.id === task.project_id)}
                 token={token}
+                allTasks={tasks}
               />
             ))}
           </motion.div>
