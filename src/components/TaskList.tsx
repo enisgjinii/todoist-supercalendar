@@ -13,13 +13,21 @@ import {
   AlertCircle,
   Link as LinkIcon,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Tag,
+  Calendar,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { useTaskComments, useToggleTask } from "@/hooks/useTasks";
+import { useTaskComments, useToggleTask, useLabels } from "@/hooks/useTasks";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface TaskListProps {
   date: Date;
@@ -32,13 +40,13 @@ interface TaskListProps {
 const getPriorityColor = (priority: number) => {
   switch (priority) {
     case 4:
-      return "text-red-500";
+      return "text-red-500 dark:text-red-400";
     case 3:
-      return "text-orange-500";
+      return "text-orange-500 dark:text-orange-400";
     case 2:
-      return "text-yellow-500";
+      return "text-yellow-500 dark:text-yellow-400";
     default:
-      return "text-blue-500";
+      return "text-blue-500 dark:text-blue-400";
   }
 };
 
@@ -52,6 +60,7 @@ const getRelativeDate = (date: Date) => {
 const TaskItem = ({ task, project, token }: { task: any; project: any; token: string }) => {
   const [expanded, setExpanded] = useState(false);
   const { data: comments, isLoading: commentsLoading } = useTaskComments(token, task.id);
+  const { data: labels } = useLabels(token);
   const toggleTask = useToggleTask();
 
   const handleToggle = () => {
@@ -65,8 +74,8 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className={cn(
-        "p-4 rounded-lg border transition-all hover:shadow-md",
-        task.is_completed ? "bg-zinc-50 border-zinc-200" : "border-zinc-200 hover:border-zinc-300"
+        "p-4 rounded-lg border transition-all hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/20",
+        task.is_completed ? "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700" : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
       )}
     >
       <div className="flex items-start gap-4">
@@ -76,22 +85,40 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
           disabled={toggleTask.isPending}
         >
           {task.is_completed ? (
-            <CheckCircle2 size={20} className="text-green-500" />
+            <CheckCircle2 size={20} className="text-green-500 dark:text-green-400" />
           ) : (
-            <Circle size={20} className="text-zinc-300 hover:text-zinc-400" />
+            <Circle size={20} className="text-zinc-300 dark:text-zinc-600 hover:text-zinc-400 dark:hover:text-zinc-500" />
           )}
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className={cn(
-                "font-medium break-words",
-                task.is_completed ? "text-zinc-500 line-through" : "text-zinc-900"
-              )}>
-                {task.content}
-              </h3>
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <h3 className={cn(
+                    "font-medium break-words cursor-help",
+                    task.is_completed ? "text-zinc-500 dark:text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-100"
+                  )}>
+                    {task.content}
+                  </h3>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-80">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <span className="text-sm">Created {format(new Date(task.created_at), "PPP")}</span>
+                    </div>
+                    {project && (
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4" />
+                        <span className="text-sm">Project: {project.name}</span>
+                      </div>
+                    )}
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
               {task.description && (
-                <p className="text-sm text-zinc-500 mt-1">{task.description}</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{task.description}</p>
               )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -113,11 +140,15 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
             <Badge variant="secondary" className="text-xs">
               {project?.name}
             </Badge>
-            {task.labels?.map((label: string) => (
-              <Badge key={label} variant="outline" className="text-xs">
-                {label}
-              </Badge>
-            ))}
+            {task.labels?.map((labelId: string) => {
+              const label = labels?.find((l: any) => l.name === labelId);
+              return (
+                <Badge key={labelId} variant="outline" className="text-xs flex items-center gap-1">
+                  <Tag size={10} />
+                  {label?.name || labelId}
+                </Badge>
+              );
+            })}
             {task.comment_count > 0 && (
               <Badge variant="secondary" className="text-xs">
                 <MessageSquare size={12} className="mr-1" />
@@ -136,7 +167,7 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
               href={task.url} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-xs text-blue-500 hover:underline mt-2 inline-flex items-center gap-1"
+              className="text-xs text-blue-500 dark:text-blue-400 hover:underline mt-2 inline-flex items-center gap-1"
             >
               <LinkIcon size={12} />
               View in Todoist
@@ -177,14 +208,14 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
                       {comments.map((comment: any) => (
                         <div key={comment.id} className="text-sm">
                           <div className="font-medium">{comment.content}</div>
-                          <div className="text-xs text-zinc-500 mt-1">
-                            {format(new Date(comment.posted_at), "MMM d, yyyy HH:mm")}
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                            {format(new Date(comment.posted_at), "PPP p")}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-zinc-500">No comments yet</p>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">No comments yet</p>
                   )}
                 </ScrollArea>
               </motion.div>
@@ -198,13 +229,13 @@ const TaskItem = ({ task, project, token }: { task: any; project: any; token: st
 
 export const TaskList = ({ date, tasks, isLoading, projects, token }: TaskListProps) => {
   return (
-    <Card className="flex-1 p-6 backdrop-blur-sm bg-white/90">
+    <Card className="flex-1 p-6 backdrop-blur-sm bg-white/90 dark:bg-zinc-900/90">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-semibold text-zinc-900">
+          <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
             {getRelativeDate(date)}
           </h2>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {format(date, "EEEE")} · {tasks.length} tasks
           </p>
         </div>
@@ -243,8 +274,8 @@ export const TaskList = ({ date, tasks, isLoading, projects, token }: TaskListPr
             exit={{ opacity: 0 }}
             className="text-center py-12"
           >
-            <p className="text-zinc-500 mb-2">No tasks for this day</p>
-            <p className="text-sm text-zinc-400">
+            <p className="text-zinc-500 dark:text-zinc-400 mb-2">No tasks for this day</p>
+            <p className="text-sm text-zinc-400 dark:text-zinc-500">
               Time to relax or plan ahead!
             </p>
           </motion.div>

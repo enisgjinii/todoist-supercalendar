@@ -1,6 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface TodoistTask {
   id: string;
@@ -30,7 +31,7 @@ async function fetchTasks(token: string, date: Date, projectId: string | null) {
   
   const formattedDate = format(date, "yyyy-MM-dd");
   const filter = projectId 
-    ? `due:${formattedDate} & #project_id=${projectId}`
+    ? `due:${formattedDate} & #${projectId}`
     : `due:${formattedDate}`;
     
   const response = await fetch(`https://api.todoist.com/rest/v2/tasks?filter=${encodeURIComponent(filter)}`, {
@@ -77,6 +78,20 @@ async function fetchTaskComments(token: string, taskId: string) {
   return response.json();
 }
 
+async function fetchLabels(token: string) {
+  const response = await fetch("https://api.todoist.com/rest/v2/labels", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch labels");
+  }
+
+  return response.json();
+}
+
 export function useTasks(token: string, date: Date, projectId: string | null) {
   return useQuery({
     queryKey: ["tasks", token, format(date, "yyyy-MM-dd"), projectId],
@@ -93,6 +108,14 @@ export function useTaskComments(token: string, taskId: string) {
   });
 }
 
+export function useLabels(token: string) {
+  return useQuery({
+    queryKey: ["labels", token],
+    queryFn: () => fetchLabels(token),
+    enabled: !!token,
+  });
+}
+
 export function useToggleTask() {
   const queryClient = useQueryClient();
   
@@ -101,6 +124,10 @@ export function useToggleTask() {
       toggleTaskCompletion(token, taskId, completed),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task status updated");
+    },
+    onError: () => {
+      toast.error("Failed to update task status");
     },
   });
 }
