@@ -1,12 +1,8 @@
+"use client";
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  X, CheckSquare, Calendar, Flag, Clock, Tags, 
-  Filter, BarChart2, Database, LogOut, Settings,
-  Star, List, Inbox, Layout
-} from "lucide-react";
+import { X, Calendar, Inbox, CheckSquare, Database, LogOut, Settings, Star } from "lucide-react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
 interface SidebarProps {
@@ -17,7 +13,13 @@ interface SidebarProps {
   toggleSidebar: () => void;
 }
 
-export const Sidebar = ({ isOpen, view, onViewChange, onLogout, toggleSidebar }: SidebarProps) => {
+export const Sidebar = ({
+  isOpen,
+  view,
+  onViewChange,
+  onLogout,
+  toggleSidebar
+}: SidebarProps) => {
   return (
     <motion.aside
       initial={{ x: -260 }}
@@ -35,7 +37,12 @@ export const Sidebar = ({ isOpen, view, onViewChange, onLogout, toggleSidebar }:
             SuperCalendar
           </h2>
         </div>
-        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hover:bg-gray-100 dark:hover:bg-zinc-800">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="hover:bg-gray-100 dark:hover:bg-zinc-800"
+        >
           <X className="h-5 w-5" />
         </Button>
       </div>
@@ -51,81 +58,23 @@ export const Sidebar = ({ isOpen, view, onViewChange, onLogout, toggleSidebar }:
             </h3>
           </div>
           <div className="space-y-1 px-2">
-            {/* Quick Access */}
             <Button
               variant={view === "todoist-inbox" ? "default" : "ghost"}
-              className="w-full justify-start bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20"
+              className="w-full justify-start"
               onClick={() => onViewChange("todoist-inbox")}
             >
-              <Inbox className="mr-2 h-4 w-4 text-purple-600" />
+              <Inbox className="mr-2 h-4 w-4" />
               Inbox
             </Button>
 
-            {/* Main Features */}
-            <div className="space-y-1 mt-2">
-              <Button
-                variant={view === "todoist-tasks" ? "default" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => onViewChange("todoist-tasks")}
-              >
-                <CheckSquare className="mr-2 h-4 w-4" />
-                Tasks
-              </Button>
-              <Button
-                variant={view === "todoist-calendar" ? "default" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => onViewChange("todoist-calendar")}
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                Calendar
-              </Button>
-              <Button
-                variant={view === "todoist-board" ? "default" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => onViewChange("todoist-board")}
-              >
-                <Layout className="mr-2 h-4 w-4" />
-                Board View
-              </Button>
-            </div>
-
-            <Separator className="my-2" />
-
-            {/* Additional Features */}
-            <div className="space-y-1">
-              <Button
-                variant={view === "todoist-priorities" ? "default" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => onViewChange("todoist-priorities")}
-              >
-                <Flag className="mr-2 h-4 w-4" />
-                Priorities
-              </Button>
-              <Button
-                variant={view === "todoist-upcoming" ? "default" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => onViewChange("todoist-upcoming")}
-              >
-                <Clock className="mr-2 h-4 w-4" />
-                Upcoming
-              </Button>
-              <Button
-                variant={view === "todoist-labels" ? "default" : "ghost"}
-                className="w-full justify-start opacity-75 hover:opacity-100"
-                onClick={() => onViewChange("todoist-labels")}
-              >
-                <Tags className="mr-2 h-4 w-4" />
-                Labels
-              </Button>
-              <Button
-                variant={view === "todoist-filters" ? "default" : "ghost"}
-                className="w-full justify-start opacity-75 hover:opacity-100"
-                onClick={() => onViewChange("todoist-filters")}
-              >
-                <Filter className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
-            </div>
+            <Button
+              variant={view === "todoist-tasks" ? "default" : "ghost"}
+              className="w-full justify-start"
+              onClick={() => onViewChange("todoist-tasks")}
+            >
+              <CheckSquare className="mr-2 h-4 w-4" />
+              Tasks
+            </Button>
           </div>
         </div>
 
@@ -140,10 +89,10 @@ export const Sidebar = ({ isOpen, view, onViewChange, onLogout, toggleSidebar }:
           <div className="space-y-1 px-2">
             <Button
               variant={view === "notion-databases" ? "default" : "ghost"}
-              className="w-full justify-start bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20"
+              className="w-full justify-start"
               onClick={() => onViewChange("notion-databases")}
             >
-              <Database className="mr-2 h-4 w-4 text-blue-600" />
+              <Database className="mr-2 h-4 w-4" />
               Databases
             </Button>
           </div>
@@ -160,8 +109,8 @@ export const Sidebar = ({ isOpen, view, onViewChange, onLogout, toggleSidebar }:
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </Button>
-        <Button 
-          variant="destructive" 
+        <Button
+          variant="destructive"
           className="w-full justify-start bg-red-500/10 hover:bg-red-500/20 text-red-600"
           onClick={onLogout}
         >
