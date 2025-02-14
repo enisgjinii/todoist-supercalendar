@@ -1,13 +1,14 @@
-
+//// filepath: /c:/Users/egjin/Desktop/todoist-supercalendar/src/pages/Index.tsx
 import { useState } from "react";
 import { Calendar } from "@/components/Calendar";
 import { TokenInput } from "@/components/TokenInput";
+import { NotionDatabasesList } from "@/components/NotionDatabasesList";
 import { TaskSidebar } from "@/components/TaskSidebar";
 import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Navigation } from "@/components/Navigation";
 import { MonthView } from "@/components/views/MonthView";
@@ -21,6 +22,7 @@ const Index = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const { data: projects, isLoading: projectsLoading } = useProjects(tokens.todoistToken);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Extend view state to include "notion-databases" and "tasks"
   const [view, setView] = useState("month");
 
   const handleLogout = () => {
@@ -37,29 +39,37 @@ const Index = () => {
   };
 
   const Navbar = () => (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-morphism">
-      <div className="flex items-center justify-between px-4 h-16">
+    <nav className="fixed top-0 left-0 right-0 z-50 glass-morphism border-b border-zinc-200/50 dark:border-zinc-800/50">
+      <div className="flex items-center justify-between px-6 h-16">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="hover:bg-zinc-100 dark:hover:bg-zinc-800"
           >
             {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
-          <h1 className="text-xl font-semibold font-heading">SuperCalendar</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold font-heading bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-zinc-100 dark:to-zinc-400 bg-clip-text text-transparent">
+              SuperCalendar
+            </h1>
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+              Beta
+            </span>
+          </div>
         </div>
       </div>
     </nav>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800">
       <Navbar />
-      
       {!tokens.todoistToken || !tokens.notionToken ? (
         <div className="container mx-auto px-4 pt-24 pb-16">
           <TokenInput onTokenSubmit={handleTokenSubmit} />
+          <NotionDatabasesList notionToken={tokens.notionToken} />
         </div>
       ) : (
         <div className="flex h-screen pt-16">
@@ -69,8 +79,12 @@ const Index = () => {
                 initial={{ x: -280, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -280, opacity: 0 }}
-                transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                className="fixed inset-y-16 left-0 z-30 w-[280px] glass-morphism"
+                transition={{ 
+                  type: "spring", 
+                  damping: 20, 
+                  stiffness: 300 
+                }}
+                className="fixed inset-y-16 left-0 z-30 w-[280px] glass-morphism border-r border-zinc-200/50 dark:border-zinc-800/50"
               >
                 <ScrollArea className="h-full">
                   <TaskSidebar 
@@ -78,6 +92,8 @@ const Index = () => {
                     isLoading={projectsLoading}
                     onProjectSelect={setSelectedProjectId}
                     selectedProjectId={selectedProjectId}
+                    onViewChange={setView}
+                    selectedView={view}
                   />
                 </ScrollArea>
               </motion.div>
@@ -100,6 +116,8 @@ const Index = () => {
                     token={tokens.todoistToken}
                     selectedProjectId={selectedProjectId}
                   />
+                ) : view === "notion-databases" ? (
+                  <NotionDatabasesList notionToken={tokens.notionToken} />
                 ) : (
                   <Calendar 
                     token={tokens.todoistToken} 

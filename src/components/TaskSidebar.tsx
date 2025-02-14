@@ -1,24 +1,27 @@
-
-import { motion } from "framer-motion";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Folder, Hash, LayoutGrid, List } from "lucide-react";
+//// filepath: /c:/Users/egjin/Desktop/todoist-supercalendar/src/components/TaskSidebar.tsx
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Hash, Folder, LayoutGrid, List, Database } from "lucide-react";
+// ...other imports
 
 interface TaskSidebarProps {
   projects: any[];
   isLoading: boolean;
   onProjectSelect?: (projectId: string | null) => void;
   selectedProjectId?: string | null;
+  // New props for view switching
+  onViewChange?: (view: string) => void;
+  selectedView?: string;
 }
 
 export const TaskSidebar = ({ 
   projects, 
   isLoading, 
   onProjectSelect,
-  selectedProjectId 
+  selectedProjectId,
+  onViewChange,
+  selectedView
 }: TaskSidebarProps) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
@@ -59,21 +62,37 @@ export const TaskSidebar = ({
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => onProjectSelect?.(null)}
+          onClick={() => {
+            onProjectSelect?.(null);
+            onViewChange?.("tasks");
+          }}
           className={cn(
             "w-full p-2 rounded-md text-left flex items-center gap-2 mb-2 transition-colors",
-            !selectedProjectId ? "bg-zinc-100" : "hover:bg-zinc-50"
+            !selectedProjectId && selectedView === "tasks" ? "bg-zinc-100" : "hover:bg-zinc-50"
           )}
         >
           <Hash size={16} />
           <span className="text-sm">All Tasks</span>
         </motion.button>
+        {/* New Link for Notion Databases */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onViewChange?.("notion-databases")}
+          className={cn(
+            "w-full p-2 rounded-md text-left flex items-center gap-2 mb-2 transition-colors",
+            selectedView === "notion-databases" ? "bg-zinc-100" : "hover:bg-zinc-50"
+          )}
+        >
+          <Database size={16} />
+          <span className="text-sm">Notion Databases</span>
+        </motion.button>
       </div>
-      <ScrollArea className="flex-1 p-4">
+      <div className="flex-1 p-4 overflow-y-auto">
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+              <div key={i} className="h-16 w-full bg-zinc-200 rounded" />
             ))}
           </div>
         ) : (
@@ -92,7 +111,10 @@ export const TaskSidebar = ({
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => onProjectSelect?.(project.id)}
+                onClick={() => {
+                  onProjectSelect?.(project.id);
+                  onViewChange?.("tasks");
+                }}
                 className={cn(
                   "w-full p-3 rounded-lg border transition-all",
                   selectedProjectId === project.id 
@@ -106,23 +128,13 @@ export const TaskSidebar = ({
                     <h3 className="text-sm font-medium text-zinc-900 mb-1">
                       {project.name}
                     </h3>
-                    <div className="flex gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {project.view_style || 'List'}
-                      </Badge>
-                      {project.is_favorite && (
-                        <Badge variant="secondary" className="text-xs">
-                          Favorite
-                        </Badge>
-                      )}
-                    </div>
                   </div>
                 </div>
               </motion.button>
             ))}
           </motion.div>
         )}
-      </ScrollArea>
+      </div>
     </motion.div>
   );
 };
