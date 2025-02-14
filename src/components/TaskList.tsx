@@ -1,3 +1,4 @@
+
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
@@ -69,7 +70,14 @@ const getRelativeDate = (date: Date) => {
   return format(date, "MMM d, yyyy");
 };
 
-const SubTaskList = ({ tasks, parentId, project, token }: { tasks: any[]; parentId: string; project: any; token: string }) => {
+interface SubTaskListProps {
+  parentId: string;
+  project: any;
+  token: string;
+  tasks: any[];
+}
+
+const SubTaskList = ({ tasks, parentId, project, token }: SubTaskListProps) => {
   const subtasks = tasks.filter(task => task.parent_id === parentId);
   
   if (!subtasks.length) return null;
@@ -83,13 +91,22 @@ const SubTaskList = ({ tasks, parentId, project, token }: { tasks: any[]; parent
           project={project}
           token={token}
           isSubtask
+          tasks={tasks}
         />
       ))}
     </div>
   );
 };
 
-const TaskItem = ({ task, project, token, isSubtask = false }: { task: any; project: any; token: string; isSubtask?: boolean }) => {
+interface TaskItemProps {
+  task: any;
+  project: any;
+  token: string;
+  isSubtask?: boolean;
+  tasks: any[];
+}
+
+const TaskItem = ({ task, project, token, isSubtask = false, tasks }: TaskItemProps) => {
   const [expanded, setExpanded] = useState(false);
   const { data: comments, isLoading: commentsLoading } = useTaskComments(token, task.id);
   const { data: labels } = useLabels(token);
@@ -292,7 +309,7 @@ const TaskItem = ({ task, project, token, isSubtask = false }: { task: any; proj
           </AnimatePresence>
           {!isSubtask && (
             <SubTaskList 
-              tasks={tasks} 
+              tasks={tasks}
               parentId={task.id}
               project={project}
               token={token}
@@ -341,9 +358,10 @@ export const TaskList = ({ date, tasks, isLoading, projects, token }: TaskListPr
             {mainTasks.map((task) => (
               <TaskItem 
                 key={task.id} 
-                task={task} 
+                task={task}
                 project={projects.find((p) => p.id === task.project_id)}
                 token={token}
+                tasks={tasks}
               />
             ))}
           </motion.div>
