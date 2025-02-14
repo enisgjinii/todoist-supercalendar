@@ -7,22 +7,33 @@ import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Navigation } from "@/components/Navigation";
 import { MonthView } from "@/components/views/MonthView";
+import { toast } from "sonner";
 
 const Index = () => {
-  const [token, setToken] = useState(() => localStorage.getItem("todoistToken") || "");
+  const [tokens, setTokens] = useState(() => ({
+    todoistToken: localStorage.getItem("todoistToken") || "",
+    notionToken: localStorage.getItem("notionToken") || ""
+  }));
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const { data: projects, isLoading: projectsLoading } = useProjects(token);
+  const { data: projects, isLoading: projectsLoading } = useProjects(tokens.todoistToken);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [view, setView] = useState("month");
 
   const handleLogout = () => {
-    setToken("");
+    setTokens({ todoistToken: "", notionToken: "" });
     localStorage.removeItem("todoistToken");
+    localStorage.removeItem("notionToken");
+    toast.success("Logged out successfully");
+  };
+
+  const handleTokenSubmit = (newTokens: { todoistToken: string; notionToken: string }) => {
+    setTokens(newTokens);
+    localStorage.setItem("todoistToken", newTokens.todoistToken);
+    localStorage.setItem("notionToken", newTokens.notionToken);
   };
 
   const Navbar = () => (
@@ -36,7 +47,7 @@ const Index = () => {
           >
             {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
-          <h1 className="text-xl font-semibold font-heading">Todoist Calendar</h1>
+          <h1 className="text-xl font-semibold font-heading">SuperCalendar</h1>
         </div>
       </div>
     </nav>
@@ -46,12 +57,9 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800">
       <Navbar />
       
-      {!token ? (
+      {!tokens.todoistToken || !tokens.notionToken ? (
         <div className="container mx-auto px-4 pt-24 pb-16">
-          <TokenInput onTokenSubmit={(newToken) => {
-            setToken(newToken);
-            localStorage.setItem("todoistToken", newToken);
-          }} />
+          <TokenInput onTokenSubmit={handleTokenSubmit} />
         </div>
       ) : (
         <div className="flex h-screen pt-16">
@@ -89,12 +97,12 @@ const Index = () => {
               <AnimatePresence mode="wait">
                 {view === "month" ? (
                   <MonthView 
-                    token={token}
+                    token={tokens.todoistToken}
                     selectedProjectId={selectedProjectId}
                   />
                 ) : (
                   <Calendar 
-                    token={token} 
+                    token={tokens.todoistToken} 
                     projects={projects || []} 
                     selectedProjectId={selectedProjectId}
                   />
