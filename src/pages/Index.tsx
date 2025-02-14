@@ -1,29 +1,22 @@
-//// filepath: /c:/Users/egjin/Desktop/todoist-supercalendar/src/pages/Index.tsx
-import { useState } from "react";
-import { Calendar } from "@/components/Calendar";
+import React, { useState } from "react";
 import { TokenInput } from "@/components/TokenInput";
-import { NotionDatabasesList } from "@/components/NotionDatabasesList";
-import { TaskSidebar } from "@/components/TaskSidebar";
-import { useProjects } from "@/hooks/useProjects";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Navigation } from "@/components/Navigation";
+import { Sidebar } from "@/components/Sidebar";
 import { MonthView } from "@/components/views/MonthView";
+import { Calendar } from "@/components/Calendar";
+import { NotionDatabasesList } from "@/components/NotionDatabasesList";
+import { useProjects } from "@/hooks/useProjects";
+import { Menu } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [tokens, setTokens] = useState(() => ({
     todoistToken: localStorage.getItem("todoistToken") || "",
     notionToken: localStorage.getItem("notionToken") || ""
   }));
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const { data: projects, isLoading: projectsLoading } = useProjects(tokens.todoistToken);
+  const [view, setView] = useState("todoist-inbox");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  // Extend view state to include "notion-databases" and "tasks"
-  const [view, setView] = useState("month");
+  const { data: projects } = useProjects(tokens.todoistToken);
 
   const handleLogout = () => {
     setTokens({ todoistToken: "", notionToken: "" });
@@ -38,98 +31,82 @@ const Index = () => {
     localStorage.setItem("notionToken", newTokens.notionToken);
   };
 
-  const Navbar = () => (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-morphism border-b border-zinc-200/50 dark:border-zinc-800/50">
-      <div className="flex items-center justify-between px-6 h-16">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold font-heading bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-zinc-100 dark:to-zinc-400 bg-clip-text text-transparent">
-              SuperCalendar
-            </h1>
-            <span className="px-2 py-1 text-xs font-medium rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-              Beta
-            </span>
-          </div>
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  const renderView = () => {
+    switch (view) {
+      case "todoist-inbox":
+      case "todoist-tasks":
+        return (
+          <MonthView token={tokens.todoistToken} selectedProjectId={null} />
+        );
+      case "todoist-calendar":
+        return (
+          <Calendar
+            token={tokens.todoistToken}
+            projects={projects || []}
+            selectedProjectId={null}
+          />
+        );
+      case "todoist-board":
+        return <div>Board View Coming Soon</div>;
+      case "todoist-priorities":
+        return <div>Priorities View Coming Soon</div>;
+      case "todoist-upcoming":
+        return <div>Upcoming View Coming Soon</div>;
+      case "todoist-labels":
+        return <div>Labels View Coming Soon</div>;
+      case "todoist-filters":
+        return <div>Filters View Coming Soon</div>;
+      case "notion-databases":
+        return <NotionDatabasesList notionToken={tokens.notionToken} />;
+      case "settings":
+        return <div>Settings Coming Soon</div>;
+      default:
+        return <div>Select a view from the sidebar</div>;
+    }
+  };
+
+  if (!tokens.todoistToken || !tokens.notionToken) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-900">
+        <div className="container mx-auto px-4 py-12">
+          <TokenInput onTokenSubmit={handleTokenSubmit} />
         </div>
       </div>
-    </nav>
-  );
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800">
-      <Navbar />
-      {!tokens.todoistToken || !tokens.notionToken ? (
-        <div className="container mx-auto px-4 pt-24 pb-16">
-          <TokenInput onTokenSubmit={handleTokenSubmit} />
-          <NotionDatabasesList notionToken={tokens.notionToken} />
-        </div>
-      ) : (
-        <div className="flex h-screen pt-16">
-          <AnimatePresence mode="wait">
-            {isSidebarOpen && (
-              <motion.div
-                initial={{ x: -280, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -280, opacity: 0 }}
-                transition={{ 
-                  type: "spring", 
-                  damping: 20, 
-                  stiffness: 300 
-                }}
-                className="fixed inset-y-16 left-0 z-30 w-[280px] glass-morphism border-r border-zinc-200/50 dark:border-zinc-800/50"
-              >
-                <ScrollArea className="h-full">
-                  <TaskSidebar 
-                    projects={projects || []} 
-                    isLoading={projectsLoading}
-                    onProjectSelect={setSelectedProjectId}
-                    selectedProjectId={selectedProjectId}
-                    onViewChange={setView}
-                    selectedView={view}
-                  />
-                </ScrollArea>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          <main className={cn(
-            "flex-1 flex flex-col transition-all duration-300",
-            isSidebarOpen ? "ml-[280px]" : "ml-0"
-          )}>
-            <Navigation 
-              view={view}
-              onViewChange={setView}
-              onLogout={handleLogout}
-            />
-            <ScrollArea className="flex-1">
-              <AnimatePresence mode="wait">
-                {view === "month" ? (
-                  <MonthView 
-                    token={tokens.todoistToken}
-                    selectedProjectId={selectedProjectId}
-                  />
-                ) : view === "notion-databases" ? (
-                  <NotionDatabasesList notionToken={tokens.notionToken} />
-                ) : (
-                  <Calendar 
-                    token={tokens.todoistToken} 
-                    projects={projects || []} 
-                    selectedProjectId={selectedProjectId}
-                  />
-                )}
-              </AnimatePresence>
-            </ScrollArea>
-          </main>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-900 flex">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        view={view}
+        onViewChange={setView}
+        onLogout={handleLogout}
+        toggleSidebar={toggleSidebar}
+      />
+      {!isSidebarOpen && (
+        <button
+          onClick={toggleSidebar}
+          className="fixed left-4 top-4 z-50 p-3 rounded-lg bg-white dark:bg-zinc-800 shadow-lg hover:shadow-xl transition-shadow"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
       )}
+      <div className={cn("transition-all duration-300 flex-1", isSidebarOpen ? "ml-64" : "ml-0")}>
+        <header className="p-4 border-b bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-between">
+          <div className="flex items-center">
+            <button className="md:hidden p-2 mr-2" onClick={toggleSidebar}>
+              <Menu className="h-6 w-6" />
+            </button>
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+          </div>
+        </header>
+        <main className="p-4">
+          {renderView()}
+        </main>
+      </div>
     </div>
   );
 };
