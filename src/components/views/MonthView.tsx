@@ -16,7 +16,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import { useTasks } from "@/hooks/useTasks";
 import { format, parseISO } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Clock, 
@@ -25,8 +25,6 @@ import {
   Flag,
   CheckCircle,
   Plus,
-  Filter,
-  BarChart2
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
@@ -44,6 +42,9 @@ export const MonthView = ({ token, selectedProjectId }: MonthViewProps) => {
   const [view, setView] = useState('dayGridMonth');
   const { data: tasks, isLoading, error } = useTasks(token, selected, selectedProjectId);
   const [events, setEvents] = useState<any[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedDescription, setEditedDescription] = useState('');
 
   const stats = {
     total: events.length,
@@ -75,7 +76,42 @@ export const MonthView = ({ token, selectedProjectId }: MonthViewProps) => {
 
   const handleEventClick = (info: any) => {
     setSelectedEvent(info.event);
+    setEditedTitle(info.event.title);
+    setEditedDescription(info.event.extendedProps.description || '');
     setIsEventDialogOpen(true);
+    setIsEditing(false);
+  };
+
+  const handleSave = () => {
+    if (!selectedEvent) return;
+    // update the events state locally
+    setEvents(prevEvents =>
+      prevEvents.map(event =>
+        event.id === selectedEvent.id
+          ? {
+              ...event,
+              title: editedTitle,
+              extendedProps: {
+                ...event.extendedProps,
+                description: editedDescription,
+              },
+            }
+          : event
+      )
+    );
+    toast.success("Event updated.");
+    setIsEditing(false);
+    // optionally, update backend here
+  };
+
+  const handleDelete = () => {
+    if (!selectedEvent) return;
+    setEvents(prevEvents =>
+      prevEvents.filter(event => event.id !== selectedEvent.id)
+    );
+    toast.success("Event deleted.");
+    setIsEventDialogOpen(false);
+    // optionally, delete from backend here
   };
 
   if (error) {
@@ -110,7 +146,6 @@ export const MonthView = ({ token, selectedProjectId }: MonthViewProps) => {
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           margin-bottom: 16px;
         }
-
         .fc .fc-toolbar-title {
           font-size: 1.5rem;
           font-weight: bold;
@@ -118,18 +153,15 @@ export const MonthView = ({ token, selectedProjectId }: MonthViewProps) => {
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
-
         .completed {
           opacity: 0.5;
           text-decoration: line-through;
         }
-
         .fc-event:hover {
           transform: scale(1.02);
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           transition: all 0.2s;
         }
-
         .fc-day-today {
           border: 2px solid #6b46c1;
           border-radius: 8px;
@@ -239,7 +271,15 @@ export const MonthView = ({ token, selectedProjectId }: MonthViewProps) => {
       <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{selectedEvent?.title}</DialogTitle>
+            {isEditing ? (
+              <input 
+                className="w-full text-xl font-semibold p-2 border rounded"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+              />
+            ) : (
+              <DialogTitle>{selectedEvent?.title}</DialogTitle>
+            )}
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -260,11 +300,30 @@ export const MonthView = ({ token, selectedProjectId }: MonthViewProps) => {
                 <span>Priority {selectedEvent?.extendedProps.priority}</span>
               </div>
             </div>
-            {selectedEvent?.extendedProps.description && (
-              <div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">Description</p>
-                <p>{selectedEvent.extendedProps.description}</p>
-              </div>
+            <div>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Description</p>
+              {isEditing ? (
+                <textarea
+                  className="w-full p-2 border rounded"
+                  value={editedDescription}
+                  onChange={(e) => setEditedDescription(e.target.value)}
+                />
+              ) : (
+                <p>{selectedEvent?.extendedProps.description || 'No description provided.'}</p>
+              )}
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            {isEditing ? (
+              <>
+                <Button variant="outline" onClick={handleSave}>Save</Button>
+                <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setIsEditing(true)}>Edit</Button>
+                <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+              </>
             )}
           </div>
         </DialogContent>
