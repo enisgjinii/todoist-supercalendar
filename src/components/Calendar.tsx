@@ -1,12 +1,13 @@
-
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, AlertCircle } from "lucide-react";
+import { format, addMonths, subMonths } from "date-fns";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, AlertCircle, List, Grid, Clock } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTasks } from "@/hooks/useTasks";
 import { TaskList } from "./TaskList";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,8 @@ interface CalendarProps {
 
 export const Calendar = ({ token, projects, selectedProjectId }: CalendarProps) => {
   const [selected, setSelected] = useState<Date>(new Date());
+  const [viewMode, setViewMode] = useState<"list" | "grid" | "timeline">("list");
+  const [month, setMonth] = useState<Date>(new Date());
   const { data: tasks, isLoading, error } = useTasks(token, selected, selectedProjectId);
   const { toast } = useToast();
 
@@ -57,7 +60,11 @@ export const Calendar = ({ token, projects, selectedProjectId }: CalendarProps) 
 
   if (error) {
     return (
-      <div className="p-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-8"
+      >
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -65,30 +72,82 @@ export const Calendar = ({ token, projects, selectedProjectId }: CalendarProps) 
             Failed to load tasks. Please check your connection and try again.
           </AlertDescription>
         </Alert>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="grid gap-8 md:grid-cols-[300px,1fr]">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="p-8 space-y-8"
+    >
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-semibold">
+            {format(selected, "MMMM d, yyyy")}
+          </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelected(new Date())}
+          >
+            Today
+          </Button>
+        </div>
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
+          <TabsList>
+            <TabsTrigger value="list">
+              <List className="h-4 w-4 mr-2" />
+              List
+            </TabsTrigger>
+            <TabsTrigger value="grid">
+              <Grid className="h-4 w-4 mr-2" />
+              Grid
+            </TabsTrigger>
+            <TabsTrigger value="timeline">
+              <Clock className="h-4 w-4 mr-2" />
+              Timeline
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-[350px,1fr]">
         <Card className="p-4 backdrop-blur-sm bg-white/90 dark:bg-zinc-900/90 shadow-xl border-none">
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMonth(subMonths(month, 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <h3 className="font-medium">{format(month, "MMMM yyyy")}</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMonth(addMonths(month, 1))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
           <DayPicker
             mode="single"
             selected={selected}
             onSelect={(date) => date && setSelected(date)}
+            month={month}
+            onMonthChange={setMonth}
             className="p-3"
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
               month: "space-y-4",
-              caption: "flex justify-center pt-1 relative items-center px-8",
+              caption: "flex justify-center pt-1 relative items-center",
               caption_label: "font-heading text-sm font-medium",
               nav: "space-x-1 flex items-center",
               nav_button: cn(
-                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity"
+                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity hidden"
               ),
-              nav_button_previous: "absolute left-1",
-              nav_button_next: "absolute right-1",
               table: "w-full border-collapse space-y-1",
               head_row: "flex",
               head_cell: "text-zinc-500 rounded-md w-9 font-normal text-[0.8rem] dark:text-zinc-400",
@@ -107,20 +166,39 @@ export const Calendar = ({ token, projects, selectedProjectId }: CalendarProps) 
               day_range_middle: "aria-selected:bg-zinc-100 aria-selected:text-zinc-900 dark:aria-selected:bg-zinc-800 dark:aria-selected:text-zinc-50",
               day_hidden: "invisible",
             }}
-            components={{
-              IconLeft: ({ ...props }) => <CalendarIcon className="h-4 w-4" />,
-              IconRight: ({ ...props }) => <CalendarIcon className="h-4 w-4" />,
-            }}
           />
         </Card>
-        <TaskList 
-          date={selected} 
-          tasks={tasks || []} 
-          isLoading={isLoading} 
-          projects={projects}
-          token={token}
-        />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={viewMode}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {viewMode === "list" && (
+              <TaskList 
+                date={selected} 
+                tasks={tasks || []} 
+                isLoading={isLoading} 
+                projects={projects}
+                token={token}
+              />
+            )}
+            {viewMode === "grid" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Implement grid view */}
+              </div>
+            )}
+            {viewMode === "timeline" && (
+              <div className="relative min-h-[500px]">
+                {/* Implement timeline view */}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 };

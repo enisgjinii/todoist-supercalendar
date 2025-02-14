@@ -37,9 +37,7 @@ const Index = () => {
     switch (view) {
       case "todoist-inbox":
       case "todoist-tasks":
-        return (
-          <MonthView token={tokens.todoistToken} selectedProjectId={null} />
-        );
+        return <MonthView token={tokens.todoistToken} selectedProjectId={null} />;
       case "todoist-calendar":
         return (
           <Calendar
@@ -49,21 +47,21 @@ const Index = () => {
           />
         );
       case "todoist-board":
-        return <div>Board View Coming Soon</div>;
+        return <div className="p-4">Board View Coming Soon</div>;
       case "todoist-priorities":
-        return <div>Priorities View Coming Soon</div>;
+        return <div className="p-4">Priorities View Coming Soon</div>;
       case "todoist-upcoming":
-        return <div>Upcoming View Coming Soon</div>;
+        return <div className="p-4">Upcoming View Coming Soon</div>;
       case "todoist-labels":
-        return <div>Labels View Coming Soon</div>;
+        return <div className="p-4">Labels View Coming Soon</div>;
       case "todoist-filters":
-        return <div>Filters View Coming Soon</div>;
+        return <div className="p-4">Filters View Coming Soon</div>;
       case "notion-databases":
         return <NotionDatabasesList notionToken={tokens.notionToken} />;
       case "settings":
-        return <div>Settings Coming Soon</div>;
+        return <div className="p-4">Settings Coming Soon</div>;
       default:
-        return <div>Select a view from the sidebar</div>;
+        return <div className="p-4">Select a view from the sidebar</div>;
     }
   };
 
@@ -103,9 +101,7 @@ const Index = () => {
             <h1 className="text-2xl font-bold">Dashboard</h1>
           </div>
         </header>
-        <main className="p-4">
-          {renderView()}
-        </main>
+        <main className="p-4">{renderView()}</main>
       </div>
     </div>
   );

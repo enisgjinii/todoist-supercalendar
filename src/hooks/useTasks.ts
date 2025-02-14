@@ -26,6 +26,7 @@ interface TodoistTask {
   is_completed: boolean;
 }
 
+
 const defaultHeaders = (token: string) => ({
   Authorization: `Bearer ${token}`,
   'Content-Type': 'application/json',
