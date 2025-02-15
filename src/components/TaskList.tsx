@@ -1,4 +1,3 @@
-
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
@@ -25,7 +24,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { useTaskComments, useToggleTask, useLabels } from "@/hooks/useTasks";
+import { useTaskComments } from "@/hooks/useTaskComments";
+import { useToggleTask } from "@/hooks/useToggleTask";
+import { useLabels } from "@/hooks/useLabels";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import {

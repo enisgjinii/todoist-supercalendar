@@ -76,28 +76,18 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
   const { data: projects, isLoading: projectsLoading } = useProjects(token)
   const { data: labels, isLoading: labelsLoading } = useLabels(token)
 
-  useEffect(() => {
-    if (tasks) {
-      const events = tasks
-        .filter(t => t.due)
-        .map(task => ({
-          id: task.id,
-          title: task.content,
-          start: task.due?.datetime || task.due?.date,
-          end: task.due?.datetime || task.due?.date,
-          allDay: !task.due?.datetime,
-          extendedProps: {
-            description: task.description,
-            priority: task.priority,
-            project_id: task.project_id,
-            completed: task.is_completed,
-            labels: task.labels,
-          },
-          className: `priority-${task.priority}${task.is_completed ? " completed" : ""}`
-        }))
-      setCalendarEvents(events)
-    }
-  }, [tasks])
+  const handleTaskSelection = (taskId: string) => {
+    setSelectedTasks(prev => 
+      prev.includes(taskId) 
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  const handleInlineEdit = (taskId: string) => {
+    // Placeholder for inline edit functionality
+    toast.info(`Editing task ${taskId}`);
+  };
 
   // Transform sections with their tasks
   const sectionsWithTasks = sections.map((section: Section) => ({
@@ -130,74 +120,28 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
 
   const completedTasks = filteredTasks.filter(t => t.is_completed)
 
-  const tasksBySection = sections?.map(s => ({
-    ...s,
-    tasks: filteredTasks.filter(t => t.section_id === s.id),
-  })) || []
-
-  const subTasks = filteredTasks.filter(t => t.parent_id) || []
-  const subtasksByParent = subTasks.reduce((acc: Record<string, any[]>, t: any) => {
-    if (!acc[t.parent_id]) acc[t.parent_id] = []
-    acc[t.parent_id].push(t)
-    return acc
-  }, {})
-
-  const handleEventClick = (info: any) => {
-    setSelectedEvent(info.event)
-    setEditedTitle(info.event.title)
-    setEditedDescription(info.event.extendedProps.description || "")
-    setIsEventDialogOpen(true)
-    setIsEditing(false)
-  }
-
-  const handleSave = () => {
-    if (!selectedEvent) return
-    setCalendarEvents(prev =>
-      prev.map(e =>
-        e.id === selectedEvent.id
-          ? {
-              ...e,
-              title: editedTitle,
-              extendedProps: {
-                ...e.extendedProps,
-                description: editedDescription,
-              },
-            }
-          : e
-      )
-    )
-    toast.success("Event updated.")
-    setIsEditing(false)
-  }
-
-  const handleDelete = () => {
-    if (!selectedEvent) return
-    setCalendarEvents(prev => prev.filter(e => e.id !== selectedEvent.id))
-    toast.success("Event deleted.")
-    setIsEventDialogOpen(false)
-  }
-
-  const handleBulkComplete = () => {
-    setSelectedTasks([])
-    toast.success("Selected tasks have been marked complete (placeholder).")
-  }
-
-  const handleBulkDelete = () => {
-    setSelectedTasks([])
-    toast.success("Selected tasks have been deleted (placeholder).")
-  }
-
-  const handleTaskSelection = (taskId: string) => {
-    if (selectedTasks.includes(taskId)) {
-      setSelectedTasks(prev => prev.filter(id => id !== taskId))
-    } else {
-      setSelectedTasks(prev => [...prev, taskId])
+  useEffect(() => {
+    if (tasks) {
+      const events = tasks
+        .filter(t => t.due)
+        .map(task => ({
+          id: task.id,
+          title: task.content,
+          start: task.due?.datetime || task.due?.date,
+          end: task.due?.datetime || task.due?.date,
+          allDay: !task.due?.datetime,
+          extendedProps: {
+            description: task.description,
+            priority: task.priority,
+            project_id: task.project_id,
+            completed: task.is_completed,
+            labels: task.labels,
+          },
+          className: `priority-${task.priority}${task.is_completed ? " completed" : ""}`
+        }))
+      setCalendarEvents(events)
     }
-  }
-
-  const handleInlineEdit = (taskId: string) => {
-    toast(`Inline edit triggered for Task ${taskId}`)
-  }
+  }, [tasks])
 
   if (tasksError || tasksLoading || sectionsLoading || projectsLoading || labelsLoading) {
     return (
