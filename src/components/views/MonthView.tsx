@@ -107,9 +107,10 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
   };
 
   const handleEventClick = (clickInfo: any) => {
-    setSelectedEvent(clickInfo.event);
-    setEditedTitle(clickInfo.event.title);
-    setEditedDescription(clickInfo.event.extendedProps.description || "");
+    const event = clickInfo.event;
+    setSelectedEvent(event);
+    setEditedTitle(event.title);
+    setEditedDescription(event.extendedProps.description || "");
     setIsEventDialogOpen(true);
   };
 
@@ -513,7 +514,7 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
         </div>
       </Card>
       <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             {isEditing ? (
               <input
@@ -522,51 +523,67 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
                 onChange={(e) => setEditedTitle(e.target.value)}
               />
             ) : (
-              <DialogTitle>{selectedEvent?.title}</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                {selectedEvent?.title}
+              </DialogTitle>
             )}
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Due Date</p>
-              <p className="font-medium">
+          <div className="space-y-4 mt-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gray-500" />
+              <span className="text-sm text-gray-500">Due Date:</span>
+              <span className="font-medium">
                 {selectedEvent?.start
-                  ? format(parseISO(selectedEvent.start), "PPP")
+                  ? format(new Date(selectedEvent.start), "PPP")
                   : "No date set"}
-              </p>
+              </span>
             </div>
-            <div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Priority</p>
+            
+            {selectedEvent?.extendedProps?.priority && (
               <div className="flex items-center gap-2">
-                <Flag
-                  className={`h-4 w-4 ${
-                    selectedEvent?.extendedProps.priority === 4
-                      ? "text-red-500"
-                      : selectedEvent?.extendedProps.priority === 3
-                      ? "text-orange-500"
-                      : selectedEvent?.extendedProps.priority === 2
-                      ? "text-yellow-500"
-                      : "text-blue-500"
-                  }`}
-                />
-                <span>Priority {selectedEvent?.extendedProps.priority}</span>
+                <Flag className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-500">Priority:</span>
+                <span className="font-medium">
+                  Priority {selectedEvent.extendedProps.priority}
+                </span>
               </div>
-            </div>
-            <div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Description</p>
+            )}
+
+            {selectedEvent?.extendedProps?.completed && (
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="text-sm text-green-500">Completed</span>
+              </div>
+            )}
+
+            {selectedEvent?.extendedProps?.labels?.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedEvent.extendedProps.labels.map((label: string) => (
+                  <Badge key={label} variant="outline">
+                    {label}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <span className="text-sm text-gray-500">Description:</span>
               {isEditing ? (
                 <textarea
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded min-h-[100px]"
                   value={editedDescription}
                   onChange={(e) => setEditedDescription(e.target.value)}
+                  placeholder="Add a description..."
                 />
               ) : (
-                <p>
-                  {selectedEvent?.extendedProps.description || "No description provided."}
+                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  {selectedEvent?.extendedProps?.description || "No description provided."}
                 </p>
               )}
             </div>
           </div>
-          <div className="mt-4 flex justify-end gap-2">
+
+          <div className="mt-6 flex justify-end gap-2">
             {isEditing ? (
               <>
                 <Button variant="outline" onClick={handleSave}>Save</Button>
