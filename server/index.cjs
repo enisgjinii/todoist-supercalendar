@@ -11,13 +11,11 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-app.post("/api/notion/search", async (req, res) => {
+app.get("/api/notion/search", async (req, res) => {
   try {
-    console.log("Received request:", req.body);
-    
     const response = await axios.post("https://api.notion.com/v1/search", {
       filter: {
-        value: "page",
+        value: "database",  // Changed from "page" to "database"
         property: "object"
       },
       sort: {
@@ -33,8 +31,8 @@ app.post("/api/notion/search", async (req, res) => {
       },
     });
 
-    console.log("Notion API response:", response.data);
-    res.status(response.status).json(response.data);
+    console.log("Notion API response status:", response.status);
+    res.json(response.data);
     
   } catch (error) {
     console.error("Server error:", error.response?.data || error.message);
@@ -43,6 +41,7 @@ app.post("/api/notion/search", async (req, res) => {
     });
   }
 });
+
 app.get("/api/notion/database/:id", async (req, res) => {
   try {
     const databaseId = req.params.id;

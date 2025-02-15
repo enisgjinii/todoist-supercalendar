@@ -17,32 +17,42 @@ interface NotionDatabase {
   object: 'database';
 }
 
-const NOTION_DATABASE_ID = "2d2371ae2da34c13aff42cc14e006110";
-
-const fetchNotionDatabase = async (): Promise<NotionDatabase> => {
-  console.log("[Notion Client] Fetching database...");
-  const response = await fetch(`http://localhost:3001/api/notion/database/${NOTION_DATABASE_ID}`);
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error("[Notion Client] Error fetching database:", {
-      status: response.status,
-      statusText: response.statusText,
-      errorData
+const fetchNotionDatabases = async (): Promise<NotionDatabase[]> => {
+  try {
+    console.log("[Notion Client] Fetching databases...");
+    const response = await fetch(`http://localhost:3001/api/notion/search`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
     });
-    throw new Error(`Failed to fetch database: ${response.statusText}`);
-  }
 
-  const data = await response.json();
-  console.log("[Notion Client] Database fetched successfully:", data);
-  return data;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data || !data.results) {
+      throw new Error('Invalid response format from server');
+    }
+
+    // Filter only database objects
+    const databases = data.results.filter((item: any) => item.object === 'database');
+    console.log("[Notion Client] Databases fetched successfully:", databases);
+    return databases;
+  } catch (error) {
+    console.error("[Notion Client] Error:", error);
+    throw error;
+  }
 };
 
-export function useNotionDatabase() {
+export function useNotionDatabases() {
   return useQuery({
-    queryKey: ["notionDatabase", NOTION_DATABASE_ID],
-    queryFn: fetchNotionDatabase,
-    retry: 2,
+    queryKey: ["notionDatabases"],
+    queryFn: fetchNotionDatabases,
+    retry: 1,
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

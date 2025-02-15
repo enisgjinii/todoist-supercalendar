@@ -9,6 +9,8 @@ import dayGridPlugin from "@fullcalendar/daygrid"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
 import listPlugin from "@fullcalendar/list"
+// Import the RRule plugin for recurring events
+import rrulePlugin from "@fullcalendar/rrule"
 import { useTasks } from "@/hooks/useTasks"
 import { useSections } from "@/hooks/useSections"
 import { useProjects } from "@/hooks/useProjects"
@@ -56,6 +58,10 @@ interface Task {
   };
   is_completed: boolean;
   labels: string[];
+  // New field for recurring tasks (expects an RRULE string)
+  recurrence?: string;
+  // If you also have a "priority" field, leave it here
+  priority?: number;
 }
 
 export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
@@ -187,22 +193,44 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
   useEffect(() => {
     if (tasks) {
       const events = tasks
-        .filter(t => t.due)
-        .map(task => ({
-          id: task.id,
-          title: task.content,
-          start: task.due?.datetime || task.due?.date,
-          end: task.due?.datetime || task.due?.date,
-          allDay: !task.due?.datetime,
-          extendedProps: {
-            description: task.description,
-            priority: task.priority,
-            project_id: task.project_id,
-            completed: task.is_completed,
-            labels: task.labels,
-          },
-          className: `priority-${task.priority}${task.is_completed ? " completed" : ""}`
-        }))
+        .filter(t => t.due || t.recurrence)
+        .map(task => {
+          // If the task has a recurrence rule, use the rrule property
+          if (task.recurrence) {
+            return {
+              id: task.id,
+              title: task.content,
+              // Use the recurrence rule for recurring events
+              rrule: task.recurrence,
+              // Optionally, if a due date exists, use it to define a start time
+              ...(task.due?.date && { startTime: format(parseISO(task.due.date), "HH:mm:ss") }),
+              extendedProps: {
+                description: task.description,
+                priority: task.priority,
+                project_id: task.project_id,
+                completed: task.is_completed,
+                labels: task.labels,
+              },
+              className: `priority-${task.priority}${task.is_completed ? " completed" : ""}`
+            }
+          } else {
+            return {
+              id: task.id,
+              title: task.content,
+              start: task.due?.datetime || task.due?.date,
+              end: task.due?.datetime || task.due?.date,
+              allDay: !task.due?.datetime,
+              extendedProps: {
+                description: task.description,
+                priority: task.priority,
+                project_id: task.project_id,
+                completed: task.is_completed,
+                labels: task.labels,
+              },
+              className: `priority-${task.priority}${task.is_completed ? " completed" : ""}`
+            }
+          }
+        })
       setCalendarEvents(events)
     }
   }, [tasks])
@@ -585,7 +613,7 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
               }
             `}</style>
             <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin, rrulePlugin]}
               initialView={calendarView}
               events={calendarEvents}
               eventClick={handleEventClick}
