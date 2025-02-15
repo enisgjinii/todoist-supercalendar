@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { TokenInput } from "@/components/TokenInput";
 import { Sidebar } from "@/components/Sidebar";
@@ -8,6 +9,9 @@ import { useProjects } from "@/hooks/useProjects";
 import { Menu } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Settings } from "./Settings";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Index = () => {
   const [tokens, setTokens] = useState(() => ({
@@ -16,7 +20,8 @@ const Index = () => {
   }));
   const [view, setView] = useState("todoist-inbox");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { data: projects } = useProjects(tokens.todoistToken);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const { data: projects, isLoading: projectsLoading } = useProjects(tokens.todoistToken);
 
   const handleLogout = () => {
     setTokens({ todoistToken: "", notionToken: "" });
@@ -35,33 +40,22 @@ const Index = () => {
 
   const renderView = () => {
     switch (view) {
-      case "todoist-inbox":
-      case "todoist-tasks":
-        return <MonthView token={tokens.todoistToken} selectedProjectId={null} />;
+      case "settings":
+        return <Settings todoistToken={tokens.todoistToken} />;
+      case "month":
+        return <MonthView token={tokens.todoistToken} selectedProjectId={selectedProjectId} />;
       case "todoist-calendar":
         return (
           <Calendar
             token={tokens.todoistToken}
             projects={projects || []}
-            selectedProjectId={null}
+            selectedProjectId={selectedProjectId}
           />
         );
-      case "todoist-board":
-        return <div className="p-4">Board View Coming Soon</div>;
-      case "todoist-priorities":
-        return <div className="p-4">Priorities View Coming Soon</div>;
-      case "todoist-upcoming":
-        return <div className="p-4">Upcoming View Coming Soon</div>;
-      case "todoist-labels":
-        return <div className="p-4">Labels View Coming Soon</div>;
-      case "todoist-filters":
-        return <div className="p-4">Filters View Coming Soon</div>;
       case "notion-databases":
         return <NotionDatabasesList notionToken={tokens.notionToken} />;
-      case "settings":
-        return <div className="p-4">Settings Coming Soon</div>;
       default:
-        return <div className="p-4">Select a view from the sidebar</div>;
+        return <MonthView token={tokens.todoistToken} selectedProjectId={selectedProjectId} />;
     }
   };
 
@@ -76,14 +70,34 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-900 flex">
-      <Sidebar
-        isOpen={isSidebarOpen}
-        view={view}
-        onViewChange={setView}
-        onLogout={handleLogout}
-        toggleSidebar={toggleSidebar}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800">
+      <AnimatePresence mode="wait">
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ x: -280, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -280, opacity: 0 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className="fixed inset-y-0 left-0 z-30 w-[280px] glass-morphism"
+          >
+            <ScrollArea className="h-full">
+              <Sidebar
+                view={view}
+                onViewChange={setView}
+                onLogout={handleLogout}
+                toggleSidebar={toggleSidebar}
+                isOpen={isSidebarOpen}
+                todoistToken={tokens.todoistToken}
+                projects={projects || []}
+                isLoading={projectsLoading}
+                selectedProjectId={selectedProjectId}
+                onProjectSelect={setSelectedProjectId}
+              />
+            </ScrollArea>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {!isSidebarOpen && (
         <button
           onClick={toggleSidebar}
@@ -92,17 +106,25 @@ const Index = () => {
           <Menu className="h-5 w-5" />
         </button>
       )}
-      <div className={cn("transition-all duration-300 flex-1", isSidebarOpen ? "ml-64" : "ml-0")}>
-        <header className="p-4 border-b bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-between">
-          <div className="flex items-center">
-            <button className="md:hidden p-2 mr-2" onClick={toggleSidebar}>
-              <Menu className="h-6 w-6" />
-            </button>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
-          </div>
-        </header>
-        <main className="p-4">{renderView()}</main>
-      </div>
+
+      <main className={cn(
+        "transition-all duration-300",
+        isSidebarOpen ? "ml-[280px]" : "ml-0"
+      )}>
+        <ScrollArea className="h-screen">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={view}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="p-6"
+            >
+              {renderView()}
+            </motion.div>
+          </AnimatePresence>
+        </ScrollArea>
+      </main>
     </div>
   );
 };
