@@ -1,73 +1,44 @@
-// src/hooks/useTasks.ts
+
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
 
-interface TodoistTask {
-  id: string;
-  content: string;
-  description: string;
-  project_id: string;
-  section_id: string | null;
-  parent_id: string | null;
-  order: number;
-  priority: 1 | 2 | 3 | 4;
-  due: {
-    date: string;
-    string: string;
-    datetime: string | null;
-    timezone: string | null;
-  } | null;
-  url: string;
-  comment_count: number;
-  created_at: string;
-  labels: string[];
-  assignee_id: string | null;
-  is_completed: boolean;
-}
+const defaultHeaders = (token: string) => ({
+  Authorization: `Bearer ${token}`,
+  "Content-Type": "application/json",
+  "X-Request-Id": Math.random().toString(36).substring(7),
+});
 
-function defaultHeaders(token: string) {
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-    "X-Request-Id": Math.random().toString(36).substring(7),
-  };
-}
+export const useTaskComments = (token: string, taskId: string) => {
+  return useQuery({
+    queryKey: ["taskComments", taskId],
+    queryFn: async () => {
+      const response = await fetch(`https://api.todoist.com/rest/v2/comments?task_id=${taskId}`, {
+        headers: defaultHeaders(token),
+      });
+      return response.json();
+    },
+    enabled: !!token && !!taskId,
+  });
+};
 
-// Fetches all active tasks. If a projectId is specified, only tasks from that project are returned.
-async function fetchTasks(token: string, projectId?: string | null): Promise<TodoistTask[]> {
-  if (!token) return [];
-
-  const baseUrl = "https://api.todoist.com/rest/v2/tasks";
-  let url = baseUrl;
-  if (projectId) {
-    url += `?project_id=${projectId}`;
-  }
-
-  try {
-    const response = await fetch(url, {
-      method: "GET",
+export const useToggleTask = (token: string) => {
+  return async (taskId: string) => {
+    const response = await fetch(`https://api.todoist.com/rest/v2/tasks/${taskId}/close`, {
+      method: "POST",
       headers: defaultHeaders(token),
     });
+    return response.ok;
+  };
+};
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch tasks: ${response.statusText}`);
-    }
-
-    return response.json() as Promise<TodoistTask[]>;
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    toast.error("Failed to fetch tasks.");
-    throw error;
-  }
-}
-
-// React Query hook
-export function useTasks(token: string, projectId?: string | null) {
+export const useLabels = (token: string) => {
   return useQuery({
-    queryKey: ["tasks", token, projectId],
-    queryFn: () => fetchTasks(token, projectId),
+    queryKey: ["labels", token],
+    queryFn: async () => {
+      const response = await fetch("https://api.todoist.com/rest/v2/labels", {
+        headers: defaultHeaders(token),
+      });
+      return response.json();
+    },
     enabled: !!token,
-    retry: 2,
-    staleTime: 30000,
   });
-}
+};
