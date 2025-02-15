@@ -30,12 +30,35 @@ import {
 } from "lucide-react"
 
 interface DashboardProps {
-  token: string
+  token: string;
+  selectedProjectId: string | null;
 }
 
-export const MonthView = ({ token }: DashboardProps) => {
+interface Section {
+  id: string;
+  name: string;
+  project_id: string;
+  order: number;
+  tasks?: any[];
+}
+
+interface Task {
+  id: string;
+  content: string;
+  description?: string;
+  project_id: string;
+  section_id: string | null;
+  parent_id: string | null;
+  due?: {
+    date: string;
+    datetime: string | null;
+  };
+  is_completed: boolean;
+  labels: string[];
+}
+
+export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
   const [viewOption, setViewOption] = useState<"dashboard" | "calendar">("dashboard")
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [priorityFilter, setPriorityFilter] = useState<number | null>(null)
   const [showOverdue, setShowOverdue] = useState(true)
@@ -49,7 +72,7 @@ export const MonthView = ({ token }: DashboardProps) => {
   const [calendarView, setCalendarView] = useState("dayGridMonth")
 
   const { data: tasks, isLoading: tasksLoading, error: tasksError } = useTasks(token, selectedProjectId)
-  const { data: sections, isLoading: sectionsLoading } = useSections(token, selectedProjectId || "")
+  const { data: sections = [], isLoading: sectionsLoading } = useSections(token, selectedProjectId || "")
   const { data: projects, isLoading: projectsLoading } = useProjects(token)
   const { data: labels, isLoading: labelsLoading } = useLabels(token)
 
@@ -75,6 +98,12 @@ export const MonthView = ({ token }: DashboardProps) => {
       setCalendarEvents(events)
     }
   }, [tasks])
+
+  // Transform sections with their tasks
+  const sectionsWithTasks = sections.map((section: Section) => ({
+    ...section,
+    tasks: tasks?.filter((task: Task) => task.section_id === section.id) || []
+  }));
 
   const filteredTasks = tasks?.filter(task => {
     const matchSearch = searchTerm
@@ -307,13 +336,13 @@ export const MonthView = ({ token }: DashboardProps) => {
               Bulk Delete
             </Button>
           </Card>
-          {sections && sections.length > 0 ? (
-            sections.map((section: any) => (
+          {sectionsWithTasks.length > 0 ? (
+            sectionsWithTasks.map((section: Section) => (
               <Card key={section.id} className="p-4">
                 <h3 className="text-lg font-bold mb-2">{section.name}</h3>
                 <ScrollArea className="h-60">
-                  {section.tasks.length ? (
-                    section.tasks.map((task: any) => (
+                  {section.tasks && section.tasks.length > 0 ? (
+                    section.tasks.map((task: Task) => (
                       <div key={task.id} className="border-b py-2">
                         <div className="flex items-center gap-2">
                           <input
@@ -328,25 +357,10 @@ export const MonthView = ({ token }: DashboardProps) => {
                             <Edit className="h-4 w-4" />
                           </Button>
                         </div>
-                        <p className="text-xs text-zinc-500">
-                          {task.due && format(parseISO(task.due.date || task.due.datetime), "PPP")}
-                        </p>
-                        {subtasksByParent[task.id] && (
-                          <div className="ml-4 border-l pl-2">
-                            {subtasksByParent[task.id].map((subtask: any) => (
-                              <div key={subtask.id} className="flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedTasks.includes(subtask.id)}
-                                  onChange={() => handleTaskSelection(subtask.id)}
-                                />
-                                <p className="text-sm text-gray-500">{subtask.content}</p>
-                                <Button variant="ghost" size="icon" onClick={() => handleInlineEdit(subtask.id)}>
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
+                        {task.due && (
+                          <p className="text-xs text-zinc-500">
+                            {format(parseISO(task.due.date || task.due.datetime || ''), "PPP")}
+                          </p>
                         )}
                       </div>
                     ))
@@ -360,7 +374,7 @@ export const MonthView = ({ token }: DashboardProps) => {
             <Card className="p-4">
               <h3 className="text-lg font-bold mb-2">All Tasks</h3>
               <ScrollArea className="h-60">
-                {filteredTasks.map(task => (
+                {filteredTasks.map((task: Task) => (
                   <div key={task.id} className="border-b py-2">
                     <div className="flex items-center gap-2">
                       <input
@@ -375,25 +389,10 @@ export const MonthView = ({ token }: DashboardProps) => {
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>
-                    <p className="text-xs text-zinc-500">
-                      {task.due && format(parseISO(task.due.date || task.due.datetime), "PPP")}
-                    </p>
-                    {subtasksByParent[task.id] && (
-                      <div className="ml-4 border-l pl-2">
-                        {subtasksByParent[task.id].map((subtask: any) => (
-                          <div key={subtask.id} className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={selectedTasks.includes(subtask.id)}
-                              onChange={() => handleTaskSelection(subtask.id)}
-                            />
-                            <p className="text-sm text-gray-500">{subtask.content}</p>
-                            <Button variant="ghost" size="icon" onClick={() => handleInlineEdit(subtask.id)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
+                    {task.due && (
+                      <p className="text-xs text-zinc-500">
+                        {format(parseISO(task.due.date || task.due.datetime || ''), "PPP")}
+                      </p>
                     )}
                   </div>
                 ))}
