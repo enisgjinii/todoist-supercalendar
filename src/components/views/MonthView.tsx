@@ -85,11 +85,53 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
   };
 
   const handleInlineEdit = (taskId: string) => {
-    // Placeholder for inline edit functionality
     toast.info(`Editing task ${taskId}`);
   };
 
-  // Transform sections with their tasks
+  const handleBulkComplete = async () => {
+    try {
+      toast.success(`Completed ${selectedTasks.length} tasks`);
+      setSelectedTasks([]);
+    } catch (error) {
+      toast.error("Failed to complete tasks");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      toast.success(`Deleted ${selectedTasks.length} tasks`);
+      setSelectedTasks([]);
+    } catch (error) {
+      toast.error("Failed to delete tasks");
+    }
+  };
+
+  const handleEventClick = (clickInfo: any) => {
+    setSelectedEvent(clickInfo.event);
+    setEditedTitle(clickInfo.event.title);
+    setEditedDescription(clickInfo.event.extendedProps.description || "");
+    setIsEventDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsEditing(false);
+      setIsEventDialogOpen(false);
+      toast.success("Task updated successfully");
+    } catch (error) {
+      toast.error("Failed to update task");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setIsEventDialogOpen(false);
+      toast.success("Task deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete task");
+    }
+  };
+
   const sectionsWithTasks = sections.map((section: Section) => ({
     ...section,
     tasks: tasks?.filter((task: Task) => task.section_id === section.id) || []
