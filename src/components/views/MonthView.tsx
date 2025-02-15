@@ -28,6 +28,7 @@ import {
   Search,
   Edit,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface DashboardProps {
   token: string;
@@ -70,6 +71,8 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
   const [editedTitle, setEditedTitle] = useState("")
   const [editedDescription, setEditedDescription] = useState("")
   const [calendarView, setCalendarView] = useState("dayGridMonth")
+  const [weekendsVisible, setWeekendsVisible] = useState(true)
+  const [businessHours, setBusinessHours] = useState(true)
 
   const { data: tasks, isLoading: tasksLoading, error: tasksError } = useTasks(token, selectedProjectId)
   const { data: sections = [], isLoading: sectionsLoading } = useSections(token, selectedProjectId || "")
@@ -112,6 +115,24 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
     setEditedTitle(event.title);
     setEditedDescription(event.extendedProps.description || "");
     setIsEventDialogOpen(true);
+  };
+
+  const handleEventMouseEnter = (mouseEnterInfo: any) => {
+    const el = mouseEnterInfo.el;
+    el.style.transform = 'scale(1.05)';
+    el.style.zIndex = '1000';
+    el.style.transition = 'all 0.2s ease';
+  };
+
+  const handleEventMouseLeave = (mouseLeaveInfo: any) => {
+    const el = mouseLeaveInfo.el;
+    el.style.transform = 'scale(1)';
+    el.style.zIndex = 'auto';
+  };
+
+  const handleDateClick = (arg: any) => {
+    toast.info(`Selected date: ${format(new Date(arg.date), "PPP")}`);
+    // Future enhancement: Open quick task creation modal
   };
 
   const handleSave = async () => {
@@ -439,53 +460,180 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
         </>
       )}
       {viewOption === "calendar" && (
-        <Card className="p-6 backdrop-blur-sm bg-white/90 dark:bg-zinc-900/90 border-none shadow-xl">
-          <style>{`
-            .fc .fc-toolbar {
-              background-color: white;
-              padding: 16px;
-              border-radius: 8px;
-              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-              margin-bottom: 16px;
-            }
-            .fc .fc-toolbar-title {
-              font-size: 1.5rem;
-              font-weight: bold;
-              background: linear-gradient(to right, #6b46c1, #3182ce);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-            }
-            .completed {
-              opacity: 0.5;
-              text-decoration: line-through;
-            }
-            .fc-event:hover {
-              transform: scale(1.02);
-              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-              transition: all 0.2s;
-            }
-            .fc-day-today {
-              border: 2px solid #6b46c1;
-              border-radius: 8px;
-            }
-          `}</style>
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-            initialView={calendarView}
-            events={calendarEvents}
-            eventClick={handleEventClick}
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
-            }}
-            nowIndicator
-            dayMaxEvents
-            eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
-            slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
-            height="650px"
-          />
-        </Card>
+        <>
+          <Card className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setWeekendsVisible(!weekendsVisible)}
+                  className={cn(
+                    "transition-colors",
+                    weekendsVisible && "bg-primary/10"
+                  )}
+                >
+                  {weekendsVisible ? "Hide Weekends" : "Show Weekends"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBusinessHours(!businessHours)}
+                  className={cn(
+                    "transition-colors",
+                    businessHours && "bg-primary/10"
+                  )}
+                >
+                  {businessHours ? "Hide Business Hours" : "Show Business Hours"}
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <select
+                  className="px-3 py-1 border rounded-md bg-background"
+                  value={calendarView}
+                  onChange={(e) => setCalendarView(e.target.value)}
+                >
+                  <option value="dayGridMonth">Month</option>
+                  <option value="timeGridWeek">Week</option>
+                  <option value="timeGridDay">Day</option>
+                  <option value="listWeek">List</option>
+                </select>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 backdrop-blur-sm bg-white/90 dark:bg-zinc-900/90 border-none shadow-xl">
+            <style>{`
+              .fc {
+                --fc-border-color: rgba(0,0,0,0.1);
+                --fc-today-bg-color: rgba(107, 70, 193, 0.1);
+                --fc-event-border-color: transparent;
+                --fc-event-selected-overlay-color: rgba(107, 70, 193, 0.2);
+              }
+              .fc .fc-toolbar {
+                background-color: white;
+                padding: 16px;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                margin-bottom: 16px;
+              }
+              .fc .fc-toolbar-title {
+                font-size: 1.5rem;
+                font-weight: bold;
+                background: linear-gradient(to right, #6b46c1, #3182ce);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+              }
+              .fc-event {
+                border-radius: 4px;
+                padding: 2px 4px;
+                font-size: 0.875rem;
+                transition: all 0.2s ease;
+              }
+              .fc-event:hover {
+                transform: scale(1.02);
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+              }
+              .fc-day-today {
+                border: 2px solid #6b46c1 !important;
+                border-radius: 8px;
+                background: rgba(107, 70, 193, 0.05) !important;
+              }
+              .fc-day-today .fc-daygrid-day-number {
+                background: #6b46c1;
+                color: white;
+                padding: 2px 6px;
+                border-radius: 4px;
+              }
+              .fc .fc-button {
+                background: white;
+                border: 1px solid rgba(0,0,0,0.1);
+                color: #333;
+                font-weight: 500;
+                text-transform: capitalize;
+                padding: 6px 12px;
+                transition: all 0.2s ease;
+              }
+              .fc .fc-button:hover {
+                background: rgba(107, 70, 193, 0.1);
+                border-color: #6b46c1;
+                color: #6b46c1;
+              }
+              .fc .fc-button-primary:not(:disabled).fc-button-active,
+              .fc .fc-button-primary:not(:disabled):active {
+                background: #6b46c1;
+                border-color: #6b46c1;
+                color: white;
+              }
+              .priority-1 { background-color: #ef4444; color: white; }
+              .priority-2 { background-color: #f97316; color: white; }
+              .priority-3 { background-color: #eab308; color: white; }
+              .priority-4 { background-color: #3b82f6; color: white; }
+              .completed { opacity: 0.6; }
+              .completed::after {
+                content: '✓';
+                margin-left: 4px;
+              }
+              @media (max-width: 640px) {
+                .fc .fc-toolbar {
+                  flex-direction: column;
+                  gap: 8px;
+                }
+                .fc .fc-toolbar-title {
+                  font-size: 1.25rem;
+                }
+              }
+            `}</style>
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+              initialView={calendarView}
+              events={calendarEvents}
+              eventClick={handleEventClick}
+              eventMouseEnter={handleEventMouseEnter}
+              eventMouseLeave={handleEventMouseLeave}
+              dateClick={handleDateClick}
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
+              }}
+              weekends={weekendsVisible}
+              businessHours={businessHours ? {
+                daysOfWeek: [1, 2, 3, 4, 5],
+                startTime: '09:00',
+                endTime: '17:00',
+              } : false}
+              nowIndicator
+              dayMaxEvents
+              eventTimeFormat={{ 
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+              }}
+              slotLabelFormat={{ 
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+              }}
+              height="700px"
+              slotMinTime="06:00:00"
+              slotMaxTime="22:00:00"
+              allDaySlot={true}
+              slotDuration="00:30:00"
+              snapDuration="00:15:00"
+              editable={true}
+              droppable={true}
+              selectable={true}
+              selectMirror={true}
+              dayMaxEventRows={true}
+              views={{
+                timeGrid: {
+                  dayMaxEventRows: 6
+                }
+              }}
+            />
+          </Card>
+        </>
       )}
       <Card className="p-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
