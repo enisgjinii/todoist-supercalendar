@@ -30,12 +30,12 @@ import {
 } from "lucide-react"
 
 interface DashboardProps {
-  token: string;
-  selectedProjectId: string | null;
+  token: string
 }
 
-export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
+export const MonthView = ({ token }: DashboardProps) => {
   const [viewOption, setViewOption] = useState<"dashboard" | "calendar">("dashboard")
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [priorityFilter, setPriorityFilter] = useState<number | null>(null)
   const [showOverdue, setShowOverdue] = useState(true)
