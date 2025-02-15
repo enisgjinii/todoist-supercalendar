@@ -110,10 +110,14 @@ const TaskItem = ({ task, project, token, isSubtask = false, tasks }: TaskItemPr
   const [expanded, setExpanded] = useState(false);
   const { data: comments, isLoading: commentsLoading } = useTaskComments(token, task.id);
   const { data: labels } = useLabels(token);
-  const toggleTask = useToggleTask();
+  const toggleTaskMutation = useToggleTask();
 
   const handleToggle = () => {
-    toggleTask.mutate({ token, taskId: task.id, completed: !task.is_completed });
+    toggleTaskMutation.mutate({ 
+      token, 
+      taskId: task.id, 
+      completed: !task.is_completed 
+    });
   };
 
   return (
@@ -131,7 +135,7 @@ const TaskItem = ({ task, project, token, isSubtask = false, tasks }: TaskItemPr
         <button 
           className="mt-1"
           onClick={handleToggle}
-          disabled={toggleTask.isPending}
+          disabled={toggleTaskMutation.isPending}
         >
           {task.is_completed ? (
             <CheckCircle2 size={20} className="text-green-500 dark:text-green-400" />
