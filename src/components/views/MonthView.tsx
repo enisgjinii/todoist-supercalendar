@@ -3,14 +3,11 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
 import listPlugin from "@fullcalendar/list"
-// Import the RRule plugin for recurring events
-import rrulePlugin from "@fullcalendar/rrule"
 import { useTasks } from "@/hooks/useTasks"
 import { useSections } from "@/hooks/useSections"
 import { useProjects } from "@/hooks/useProjects"
@@ -18,19 +15,12 @@ import { useLabels } from "@/hooks/useLabels"
 import { format, parseISO, isToday, isAfter, isPast } from "date-fns"
 import { motion } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Edit, Search, Flag, Plus, Calendar, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
-import {
-  Clock,
-  AlertCircle,
-  Calendar,
-  Flag,
-  CheckCircle,
-  Plus,
-  Search,
-  Edit,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+import { CalendarControls } from "./calendar/CalendarControls"
+import { EventDialog } from "./calendar/EventDialog"
+import { calendarStyles } from "./calendar/styles"
+import { getCalendarOptions } from "./calendar/calendarConfig"
 
 interface DashboardProps {
   token: string;
@@ -58,9 +48,7 @@ interface Task {
   };
   is_completed: boolean;
   labels: string[];
-  // New field for recurring tasks (expects an RRULE string)
   recurrence?: string;
-  // If you also have a "priority" field, leave it here
   priority?: number;
 }
 
@@ -138,7 +126,6 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
 
   const handleDateClick = (arg: any) => {
     toast.info(`Selected date: ${format(new Date(arg.date), "PPP")}`);
-    // Future enhancement: Open quick task creation modal
   };
 
   const handleSave = async () => {
@@ -195,14 +182,11 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
       const events = tasks
         .filter(t => t.due || t.recurrence)
         .map(task => {
-          // If the task has a recurrence rule, use the rrule property
           if (task.recurrence) {
             return {
               id: task.id,
               title: task.content,
-              // Use the recurrence rule for recurring events
               rrule: task.recurrence,
-              // Optionally, if a due date exists, use it to define a start time
               ...(task.due?.date && { startTime: format(parseISO(task.due.date), "HH:mm:ss") }),
               extendedProps: {
                 description: task.description,
@@ -234,6 +218,19 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
       setCalendarEvents(events)
     }
   }, [tasks])
+
+  const calendarOptions = getCalendarOptions(
+    calendarView,
+    weekendsVisible,
+    businessHours,
+    calendarEvents,
+    {
+      eventClick: handleEventClick,
+      eventMouseEnter: handleEventMouseEnter,
+      eventMouseLeave: handleEventMouseLeave,
+      dateClick: handleDateClick,
+    }
+  );
 
   if (tasksError || tasksLoading || sectionsLoading || projectsLoading || labelsLoading) {
     return (
@@ -613,7 +610,7 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
               }
             `}</style>
             <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin, rrulePlugin]}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
               initialView={calendarView}
               events={calendarEvents}
               eventClick={handleEventClick}

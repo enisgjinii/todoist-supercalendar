@@ -1,4 +1,6 @@
 
+import { CalendarOptions } from '@fullcalendar/core';
+
 export const getCalendarOptions = (
   calendarView: string,
   weekendsVisible: boolean,
@@ -10,7 +12,7 @@ export const getCalendarOptions = (
     eventMouseLeave: (info: any) => void;
     dateClick: (info: any) => void;
   }
-) => ({
+): CalendarOptions => ({
   plugins: ["dayGrid", "timeGrid", "interaction", "list"],
   initialView: calendarView,
   events: calendarEvents,
@@ -32,13 +34,13 @@ export const getCalendarOptions = (
   nowIndicator: true,
   dayMaxEvents: true,
   eventTimeFormat: { 
-    hour: "2-digit",
-    minute: "2-digit",
+    hour: "2-digit" as const,
+    minute: "2-digit" as const,
     hour12: false
   },
   slotLabelFormat: {
-    hour: "2-digit",
-    minute: "2-digit",
+    hour: "2-digit" as const,
+    minute: "2-digit" as const,
     hour12: false
   },
   height: "700px",
@@ -56,5 +58,22 @@ export const getCalendarOptions = (
     timeGrid: {
       dayMaxEventRows: 6
     }
-  }
+  },
+  // New features
+  weekNumbers: true,
+  weekNumberFormat: { week: 'numeric' },
+  fixedWeekCount: false,
+  showNonCurrentDates: false,
+  eventDisplay: 'block',
+  eventOverlap: false,
+  eventResizableFromStart: true,
+  eventDurationEditable: true,
+  nextDayThreshold: '00:00:00',
+  forceEventDuration: true,
+  displayEventEnd: true,
+  dragRevertDuration: 500,
+  dragScroll: true,
+  dayPopoverFormat: { month: 'long', day: 'numeric', year: 'numeric' },
+  moreLinkClick: 'popover',
+  navLinks: true
 })
