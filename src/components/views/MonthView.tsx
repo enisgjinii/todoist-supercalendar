@@ -15,6 +15,9 @@ import { StatsCards } from "./dashboard/StatsCards"
 import { SearchControls } from "./dashboard/SearchControls"
 import { ProjectSelector } from "./dashboard/ProjectSelector"
 import { ViewToggle } from "./dashboard/ViewToggle"
+import { toast } from "sonner"
+import FullCalendar from '@fullcalendar/react'
+import { calendarStyles } from "./calendar/styles"
 
 interface DashboardProps {
   token: string;
