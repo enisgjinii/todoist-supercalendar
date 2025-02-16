@@ -1,5 +1,9 @@
 
-import { CalendarOptions } from '@fullcalendar/core';
+import { CalendarOptions } from '@fullcalendar/core'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import interactionPlugin from '@fullcalendar/interaction'
+import listPlugin from '@fullcalendar/list'
 
 export const getCalendarOptions = (
   calendarView: string,
@@ -13,7 +17,7 @@ export const getCalendarOptions = (
     dateClick: (info: any) => void;
   }
 ): CalendarOptions => ({
-  plugins: ["dayGrid", "timeGrid", "interaction", "list"],
+  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
   initialView: calendarView,
   events: calendarEvents,
   eventClick: handlers.eventClick,
@@ -59,7 +63,6 @@ export const getCalendarOptions = (
       dayMaxEventRows: 6
     }
   },
-  // New features
   weekNumbers: true,
   weekNumberFormat: { week: 'numeric' },
   fixedWeekCount: false,

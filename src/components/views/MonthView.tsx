@@ -17,6 +17,7 @@ import { motion } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Edit, Search, Flag, Plus, Calendar, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 import { CalendarControls } from "./calendar/CalendarControls"
 import { EventDialog } from "./calendar/EventDialog"
 import { calendarStyles } from "./calendar/styles"
@@ -180,41 +181,22 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
   useEffect(() => {
     if (tasks) {
       const events = tasks
-        .filter(t => t.due || t.recurrence)
-        .map(task => {
-          if (task.recurrence) {
-            return {
-              id: task.id,
-              title: task.content,
-              rrule: task.recurrence,
-              ...(task.due?.date && { startTime: format(parseISO(task.due.date), "HH:mm:ss") }),
-              extendedProps: {
-                description: task.description,
-                priority: task.priority,
-                project_id: task.project_id,
-                completed: task.is_completed,
-                labels: task.labels,
-              },
-              className: `priority-${task.priority}${task.is_completed ? " completed" : ""}`
-            }
-          } else {
-            return {
-              id: task.id,
-              title: task.content,
-              start: task.due?.datetime || task.due?.date,
-              end: task.due?.datetime || task.due?.date,
-              allDay: !task.due?.datetime,
-              extendedProps: {
-                description: task.description,
-                priority: task.priority,
-                project_id: task.project_id,
-                completed: task.is_completed,
-                labels: task.labels,
-              },
-              className: `priority-${task.priority}${task.is_completed ? " completed" : ""}`
-            }
-          }
-        })
+        .filter((t: Task) => t.due)
+        .map((task: Task) => ({
+          id: task.id,
+          title: task.content,
+          start: task.due?.datetime || task.due?.date,
+          end: task.due?.datetime || task.due?.date,
+          allDay: !task.due?.datetime,
+          extendedProps: {
+            description: task.description,
+            priority: task.priority,
+            project_id: task.project_id,
+            completed: task.is_completed,
+            labels: task.labels,
+          },
+          className: `priority-${task.priority}${task.is_completed ? " completed" : ""}`
+        }))
       setCalendarEvents(events)
     }
   }, [tasks])
@@ -486,177 +468,18 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
       )}
       {viewOption === "calendar" && (
         <>
-          <Card className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setWeekendsVisible(!weekendsVisible)}
-                  className={cn(
-                    "transition-colors",
-                    weekendsVisible && "bg-primary/10"
-                  )}
-                >
-                  {weekendsVisible ? "Hide Weekends" : "Show Weekends"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setBusinessHours(!businessHours)}
-                  className={cn(
-                    "transition-colors",
-                    businessHours && "bg-primary/10"
-                  )}
-                >
-                  {businessHours ? "Hide Business Hours" : "Show Business Hours"}
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <select
-                  className="px-3 py-1 border rounded-md bg-background"
-                  value={calendarView}
-                  onChange={(e) => setCalendarView(e.target.value)}
-                >
-                  <option value="dayGridMonth">Month</option>
-                  <option value="timeGridWeek">Week</option>
-                  <option value="timeGridDay">Day</option>
-                  <option value="listWeek">List</option>
-                </select>
-              </div>
-            </div>
-          </Card>
+          <CalendarControls
+            weekendsVisible={weekendsVisible}
+            setWeekendsVisible={setWeekendsVisible}
+            businessHours={businessHours}
+            setBusinessHours={setBusinessHours}
+            calendarView={calendarView}
+            setCalendarView={setCalendarView}
+          />
 
           <Card className="p-6 backdrop-blur-sm bg-white/90 dark:bg-zinc-900/90 border-none shadow-xl">
-            <style>{`
-              .fc {
-                --fc-border-color: rgba(0,0,0,0.1);
-                --fc-today-bg-color: rgba(107, 70, 193, 0.1);
-                --fc-event-border-color: transparent;
-                --fc-event-selected-overlay-color: rgba(107, 70, 193, 0.2);
-              }
-              .fc .fc-toolbar {
-                background-color: white;
-                padding: 16px;
-                border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                margin-bottom: 16px;
-              }
-              .fc .fc-toolbar-title {
-                font-size: 1.5rem;
-                font-weight: bold;
-                background: linear-gradient(to right, #6b46c1, #3182ce);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-              }
-              .fc-event {
-                border-radius: 4px;
-                padding: 2px 4px;
-                font-size: 0.875rem;
-                transition: all 0.2s ease;
-              }
-              .fc-event:hover {
-                transform: scale(1.02);
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-              }
-              .fc-day-today {
-                border: 2px solid #6b46c1 !important;
-                border-radius: 8px;
-                background: rgba(107, 70, 193, 0.05) !important;
-              }
-              .fc-day-today .fc-daygrid-day-number {
-                background: #6b46c1;
-                color: white;
-                padding: 2px 6px;
-                border-radius: 4px;
-              }
-              .fc .fc-button {
-                background: white;
-                border: 1px solid rgba(0,0,0,0.1);
-                color: #333;
-                font-weight: 500;
-                text-transform: capitalize;
-                padding: 6px 12px;
-                transition: all 0.2s ease;
-              }
-              .fc .fc-button:hover {
-                background: rgba(107, 70, 193, 0.1);
-                border-color: #6b46c1;
-                color: #6b46c1;
-              }
-              .fc .fc-button-primary:not(:disabled).fc-button-active,
-              .fc .fc-button-primary:not(:disabled):active {
-                background: #6b46c1;
-                border-color: #6b46c1;
-                color: white;
-              }
-              .priority-1 { background-color: #ef4444; color: white; }
-              .priority-2 { background-color: #f97316; color: white; }
-              .priority-3 { background-color: #eab308; color: white; }
-              .priority-4 { background-color: #3b82f6; color: white; }
-              .completed { opacity: 0.6; }
-              .completed::after {
-                content: '✓';
-                margin-left: 4px;
-              }
-              @media (max-width: 640px) {
-                .fc .fc-toolbar {
-                  flex-direction: column;
-                  gap: 8px;
-                }
-                .fc .fc-toolbar-title {
-                  font-size: 1.25rem;
-                }
-              }
-            `}</style>
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-              initialView={calendarView}
-              events={calendarEvents}
-              eventClick={handleEventClick}
-              eventMouseEnter={handleEventMouseEnter}
-              eventMouseLeave={handleEventMouseLeave}
-              dateClick={handleDateClick}
-              headerToolbar={{
-                left: "prev,next today",
-                center: "title",
-                right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
-              }}
-              weekends={weekendsVisible}
-              businessHours={businessHours ? {
-                daysOfWeek: [1, 2, 3, 4, 5],
-                startTime: '09:00',
-                endTime: '17:00',
-              } : false}
-              nowIndicator
-              dayMaxEvents
-              eventTimeFormat={{ 
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false
-              }}
-              slotLabelFormat={{ 
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false
-              }}
-              height="700px"
-              slotMinTime="06:00:00"
-              slotMaxTime="22:00:00"
-              allDaySlot={true}
-              slotDuration="00:30:00"
-              snapDuration="00:15:00"
-              editable={true}
-              droppable={true}
-              selectable={true}
-              selectMirror={true}
-              dayMaxEventRows={true}
-              views={{
-                timeGrid: {
-                  dayMaxEventRows: 6
-                }
-              }}
-            />
+            <style>{calendarStyles}</style>
+            <FullCalendar {...calendarOptions} />
           </Card>
         </>
       )}
@@ -686,91 +509,19 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
           </Button>
         </div>
       </Card>
-      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            {isEditing ? (
-              <input
-                className="w-full text-xl font-semibold p-2 border rounded"
-                value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-              />
-            ) : (
-              <DialogTitle className="text-xl font-semibold">
-                {selectedEvent?.title}
-              </DialogTitle>
-            )}
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-500">Due Date:</span>
-              <span className="font-medium">
-                {selectedEvent?.start
-                  ? format(new Date(selectedEvent.start), "PPP")
-                  : "No date set"}
-              </span>
-            </div>
-            
-            {selectedEvent?.extendedProps?.priority && (
-              <div className="flex items-center gap-2">
-                <Flag className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-500">Priority:</span>
-                <span className="font-medium">
-                  Priority {selectedEvent.extendedProps.priority}
-                </span>
-              </div>
-            )}
-
-            {selectedEvent?.extendedProps?.completed && (
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm text-green-500">Completed</span>
-              </div>
-            )}
-
-            {selectedEvent?.extendedProps?.labels?.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedEvent.extendedProps.labels.map((label: string) => (
-                  <Badge key={label} variant="outline">
-                    {label}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <span className="text-sm text-gray-500">Description:</span>
-              {isEditing ? (
-                <textarea
-                  className="w-full p-2 border rounded min-h-[100px]"
-                  value={editedDescription}
-                  onChange={(e) => setEditedDescription(e.target.value)}
-                  placeholder="Add a description..."
-                />
-              ) : (
-                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {selectedEvent?.extendedProps?.description || "No description provided."}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-end gap-2">
-            {isEditing ? (
-              <>
-                <Button variant="outline" onClick={handleSave}>Save</Button>
-                <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => setIsEditing(true)}>Edit</Button>
-                <Button variant="destructive" onClick={handleDelete}>Delete</Button>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <EventDialog
+        isOpen={isEventDialogOpen}
+        onOpenChange={setIsEventDialogOpen}
+        selectedEvent={selectedEvent}
+        isEditing={isEditing}
+        editedTitle={editedTitle}
+        setEditedTitle={setEditedTitle}
+        editedDescription={editedDescription}
+        setEditedDescription={setEditedDescription}
+        setIsEditing={setIsEditing}
+        handleSave={handleSave}
+        handleDelete={handleDelete}
+      />
     </motion.div>
   )
 }
