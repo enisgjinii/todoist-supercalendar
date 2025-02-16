@@ -49,7 +49,6 @@ interface Task {
   };
   is_completed: boolean;
   labels: string[];
-  recurrence?: string;
   priority?: number;
 }
 
@@ -148,36 +147,6 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
     }
   };
 
-  const sectionsWithTasks = sections.map((section: Section) => ({
-    ...section,
-    tasks: tasks?.filter((task: Task) => task.section_id === section.id) || []
-  }));
-
-  const filteredTasks = tasks?.filter(task => {
-    const matchSearch = searchTerm
-      ? task.content.toLowerCase().includes(searchTerm.toLowerCase())
-      : true
-    const matchPriority = priorityFilter ? task.priority === priorityFilter : true
-    return matchSearch && matchPriority
-  }) || []
-
-  const overdueTasks = filteredTasks.filter(t => {
-    if (!t.due?.date) return false
-    return isPast(parseISO(t.due.datetime || t.due.date)) && !t.is_completed
-  })
-
-  const todayTasks = filteredTasks.filter(t => {
-    if (!t.due?.date) return false
-    return isToday(parseISO(t.due.datetime || t.due.date))
-  })
-
-  const upcomingTasks = filteredTasks.filter(t => {
-    if (!t.due?.date) return false
-    return isAfter(parseISO(t.due.datetime || t.due.date), new Date())
-  })
-
-  const completedTasks = filteredTasks.filter(t => t.is_completed)
-
   useEffect(() => {
     if (tasks) {
       const events = tasks
@@ -222,9 +191,35 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
     )
   }
 
-  const totalTasks = filteredTasks.length
-  const overdueCount = overdueTasks.length
-  const completedCount = completedTasks.length
+  const sectionsWithTasks = sections.map((section: Section) => ({
+    ...section,
+    tasks: tasks?.filter((task: Task) => task.section_id === section.id) || []
+  }));
+
+  const filteredTasks = tasks?.filter(task => {
+    const matchSearch = searchTerm
+      ? task.content.toLowerCase().includes(searchTerm.toLowerCase())
+      : true
+    const matchPriority = priorityFilter ? task.priority === priorityFilter : true
+    return matchSearch && matchPriority
+  }) || []
+
+  const overdueTasks = filteredTasks.filter(t => {
+    if (!t.due?.date) return false
+    return isPast(parseISO(t.due.datetime || t.due.date)) && !t.is_completed
+  })
+
+  const todayTasks = filteredTasks.filter(t => {
+    if (!t.due?.date) return false
+    return isToday(parseISO(t.due.datetime || t.due.date))
+  })
+
+  const upcomingTasks = filteredTasks.filter(t => {
+    if (!t.due?.date) return false
+    return isAfter(parseISO(t.due.datetime || t.due.date), new Date())
+  })
+
+  const completedTasks = filteredTasks.filter(t => t.is_completed)
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-4 space-y-6">
