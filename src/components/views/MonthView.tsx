@@ -202,24 +202,28 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
       : true
     const matchPriority = priorityFilter ? task.priority === priorityFilter : true
     return matchSearch && matchPriority
-  }) || []
+  }) || [];
 
   const overdueTasks = filteredTasks.filter(t => {
     if (!t.due?.date) return false
     return isPast(parseISO(t.due.datetime || t.due.date)) && !t.is_completed
-  })
+  });
 
   const todayTasks = filteredTasks.filter(t => {
     if (!t.due?.date) return false
     return isToday(parseISO(t.due.datetime || t.due.date))
-  })
+  });
 
   const upcomingTasks = filteredTasks.filter(t => {
     if (!t.due?.date) return false
     return isAfter(parseISO(t.due.datetime || t.due.date), new Date())
-  })
+  });
 
-  const completedTasks = filteredTasks.filter(t => t.is_completed)
+  const completedTasks = filteredTasks.filter(t => t.is_completed);
+
+  const totalTasksCount = filteredTasks.length;
+  const overdueTasksCount = overdueTasks.length;
+  const completedTasksCount = completedTasks.length;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-4 space-y-6">
@@ -267,15 +271,15 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
         <div className="flex gap-4 flex-wrap">
           <div className="flex flex-col">
             <span className="text-sm text-gray-500">Total Tasks</span>
-            <span className="font-bold text-xl">{totalTasks}</span>
+            <span className="font-bold text-xl">{totalTasksCount}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-sm text-gray-500">Overdue</span>
-            <span className="font-bold text-xl">{overdueCount}</span>
+            <span className="font-bold text-xl">{overdueTasksCount}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-sm text-gray-500">Completed</span>
-            <span className="font-bold text-xl">{completedCount}</span>
+            <span className="font-bold text-xl">{completedTasksCount}</span>
           </div>
         </div>
       </Card>
@@ -285,14 +289,14 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
             <h3 className="text-lg font-bold mb-2">Projects</h3>
             <ScrollArea className="h-20">
               <div className="flex gap-4">
-                <Button variant={selectedProjectId === null ? "secondary" : "outline"} onClick={() => setSelectedProjectId(null)}>
+                <Button variant={selectedProjectId === null ? "secondary" : "outline"} className="whitespace-nowrap">
                   All Projects
                 </Button>
                 {projects && projects.map((p: any) => (
                   <Button
                     key={p.id}
                     variant={selectedProjectId === p.id ? "secondary" : "outline"}
-                    onClick={() => setSelectedProjectId(p.id)}
+                    className="whitespace-nowrap"
                   >
                     {p.name}
                   </Button>
