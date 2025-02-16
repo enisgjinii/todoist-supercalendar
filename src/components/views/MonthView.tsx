@@ -22,6 +22,18 @@ import { CalendarControls } from "./calendar/CalendarControls"
 import { EventDialog } from "./calendar/EventDialog"
 import { calendarStyles } from "./calendar/styles"
 import { getCalendarOptions } from "./calendar/calendarConfig"
+import { Sparkles, LayoutDashboard, Clock, BellRing, Target, CircleSlash2, StickyNote } from "lucide-react"
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface DashboardProps {
   token: string;
@@ -227,36 +239,75 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-4 space-y-6">
-      <Card className="p-4 flex flex-col gap-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <h2 className="text-2xl font-bold">Ultimate Todoist Dashboard</h2>
-          <div className="flex gap-2">
-            <Button variant={viewOption === "dashboard" ? "secondary" : "outline"} onClick={() => setViewOption("dashboard")}>
-              Dashboard View
-            </Button>
-            <Button variant={viewOption === "calendar" ? "secondary" : "outline"} onClick={() => setViewOption("calendar")}>
-              Calendar View
-            </Button>
+      <Card className="p-6 glass-morphism">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Ultimate Todoist Dashboard
+              </h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Organize and track your tasks efficiently
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant={viewOption === "dashboard" ? "default" : "outline"} 
+                    onClick={() => setViewOption("dashboard")}
+                    className="gap-2"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Switch to Dashboard View</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant={viewOption === "calendar" ? "default" : "outline"} 
+                    onClick={() => setViewOption("calendar")}
+                    className="gap-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Calendar
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Switch to Calendar View</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="mt-6 flex items-center gap-4 flex-wrap">
           <div className="relative w-full max-w-xs">
-            <Search className="absolute left-2 top-2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <input
               type="text"
               placeholder="Search tasks..."
-              className="pl-8 pr-2 py-1 border rounded w-full"
+              className="pl-10 pr-4 py-2 w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <select
-            className="border rounded px-2 py-1"
+            className="px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
             value={priorityFilter || ""}
-            onChange={(e) => {
-              const val = e.target.value
-              setPriorityFilter(val ? parseInt(val) : null)
-            }}
+            onChange={(e) => setPriorityFilter(e.target.value ? parseInt(e.target.value) : null)}
           >
             <option value="">All Priorities</option>
             <option value="1">Priority 1</option>
@@ -264,39 +315,112 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
             <option value="3">Priority 3</option>
             <option value="4">Priority 4</option>
           </select>
-          <Button variant="outline" onClick={() => setShowOverdue(!showOverdue)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowOverdue(!showOverdue)}
+            className="gap-2"
+          >
+            {showOverdue ? <CircleSlash2 className="h-4 w-4" /> : <BellRing className="h-4 w-4" />}
             {showOverdue ? "Hide Overdue" : "Show Overdue"}
           </Button>
         </div>
-        <div className="flex gap-4 flex-wrap">
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Total Tasks</span>
-            <span className="font-bold text-xl">{totalTasksCount}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Overdue</span>
-            <span className="font-bold text-xl">{overdueTasksCount}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-500">Completed</span>
-            <span className="font-bold text-xl">{completedTasksCount}</span>
-          </div>
+
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Card className="p-4 cursor-help transition-all hover:shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Total Tasks</p>
+                    <p className="text-2xl font-bold">{totalTasksCount}</p>
+                  </div>
+                </div>
+              </Card>
+            </HoverCardTrigger>
+            <HoverCardContent>
+              All tasks in your selected project view
+            </HoverCardContent>
+          </HoverCard>
+
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Card className="p-4 cursor-help transition-all hover:shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Overdue</p>
+                    <p className="text-2xl font-bold">{overdueTasksCount}</p>
+                  </div>
+                </div>
+              </Card>
+            </HoverCardTrigger>
+            <HoverCardContent>
+              Tasks that are past their due date
+            </HoverCardContent>
+          </HoverCard>
+
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Card className="p-4 cursor-help transition-all hover:shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Completed</p>
+                    <p className="text-2xl font-bold">{completedTasksCount}</p>
+                  </div>
+                </div>
+              </Card>
+            </HoverCardTrigger>
+            <HoverCardContent>
+              Tasks you've completed
+            </HoverCardContent>
+          </HoverCard>
+
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Card className="p-4 cursor-help transition-all hover:shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <StickyNote className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Today</p>
+                    <p className="text-2xl font-bold">{todayTasks.length}</p>
+                  </div>
+                </div>
+              </Card>
+            </HoverCardTrigger>
+            <HoverCardContent>
+              Tasks due today
+            </HoverCardContent>
+          </HoverCard>
         </div>
       </Card>
-      <Card className="p-4">
+
+      <Card className="p-6 glass-morphism">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="w-full">
-            <h3 className="text-lg font-bold mb-2">Projects</h3>
+            <h3 className="text-lg font-bold mb-3 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Projects</h3>
             <ScrollArea className="h-20">
-              <div className="flex gap-4">
-                <Button variant={selectedProjectId === null ? "secondary" : "outline"} className="whitespace-nowrap">
+              <div className="flex gap-2">
+                <Button 
+                  variant={selectedProjectId === null ? "default" : "outline"} 
+                  className="whitespace-nowrap transition-all hover:scale-105"
+                >
                   All Projects
                 </Button>
                 {projects && projects.map((p: any) => (
                   <Button
                     key={p.id}
-                    variant={selectedProjectId === p.id ? "secondary" : "outline"}
-                    className="whitespace-nowrap"
+                    variant={selectedProjectId === p.id ? "default" : "outline"}
+                    className="whitespace-nowrap transition-all hover:scale-105"
                   >
                     {p.name}
                   </Button>
@@ -306,16 +430,23 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
           </div>
           {labels && labels.length > 0 && (
             <div className="w-full">
-              <h3 className="text-lg font-bold mb-2">Labels</h3>
+              <h3 className="text-lg font-bold mb-3 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Labels</h3>
               <div className="flex gap-2 flex-wrap">
                 {labels.map((label: any) => (
-                  <Badge key={label.id} variant="outline">{label.name}</Badge>
+                  <Badge 
+                    key={label.id} 
+                    variant="outline"
+                    className="transition-all hover:scale-105 cursor-pointer"
+                  >
+                    {label.name}
+                  </Badge>
                 ))}
               </div>
             </div>
           )}
         </div>
       </Card>
+
       {viewOption === "dashboard" && (
         <>
           {showOverdue && overdueTasks.length > 0 && (
