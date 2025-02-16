@@ -1,6 +1,7 @@
 import React from "react";
 import { useNotionDatabases } from "@/hooks/useNotionDatabases";
-import { Database, AlertCircle } from "lucide-react";
+import { Database, AlertCircle, ExternalLink, Clock, Grid } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface NotionDatabasesListProps {
   notionToken: string;
@@ -11,77 +12,109 @@ export const NotionDatabasesList = ({ notionToken }: NotionDatabasesListProps) =
 
   if (isLoading) {
     return (
-      <div className="p-4 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-blue-200 rounded-full animate-spin border-t-blue-500" />
+          <span className="mt-4 text-sm text-gray-500">Loading databases...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 flex items-start gap-2 text-red-500 bg-red-50 rounded-lg border border-red-200">
-        <AlertCircle className="w-5 h-5 mt-0.5" />
-        <div>
-          <h3 className="font-medium">Error loading Notion databases</h3>
-          <p className="text-sm mt-1">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6 flex items-start gap-3 text-red-500 bg-red-50 rounded-xl border border-red-200"
+      >
+        <AlertCircle className="w-6 h-6 mt-0.5" />
+        <div className="space-y-2">
+          <h3 className="font-semibold text-lg">Unable to Load Databases</h3>
+          <p className="text-sm text-red-600">
             {error instanceof Error ? error.message : 'An unknown error occurred'}
           </p>
           {process.env.NODE_ENV === 'development' && (
-            <pre className="mt-2 text-xs bg-red-100 p-2 rounded overflow-auto">
+            <pre className="mt-4 text-xs bg-red-100 p-3 rounded-lg overflow-auto">
               {error instanceof Error ? error.stack : JSON.stringify(error, null, 2)}
             </pre>
           )}
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (!data?.length) {
     return (
-      <div className="p-4 text-center text-gray-500">
-        No Notion databases found
+      <div className="flex flex-col items-center justify-center min-h-[200px] text-gray-500 space-y-4">
+        <Database className="w-12 h-12 text-gray-400" />
+        <p className="text-lg font-medium">No Notion databases found</p>
+        <p className="text-sm">Connect a database to get started</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-4">
-      {data.map((database) => (
-        <div
+    <div className="grid gap-6 p-6">
+      {data.map((database, index) => (
+        <motion.div
           key={database.id}
-          className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 bg-white shadow-sm"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+          className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white hover:shadow-lg transition-all duration-300"
         >
-          <Database className="w-5 h-5 text-blue-500 mt-1" />
-          <div className="flex-1">
-            <h3 className="font-medium text-gray-900">
-              {database.title?.[0]?.plain_text || "Untitled Database"}
-            </h3>
-            <div className="mt-2 text-sm text-gray-500">
-              Last edited: {new Date(database.last_edited_time).toLocaleDateString()}
+          <div className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-lg bg-blue-50 text-blue-500">
+                <Database className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-xl text-gray-900 truncate">
+                  {database.title?.[0]?.plain_text || "Untitled Database"}
+                </h3>
+                <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                  <Clock className="w-4 h-4" />
+                  <span>
+                    Updated {new Date(database.last_edited_time).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="mt-4">
-              <h4 className="font-medium mb-2">Properties:</h4>
-              <div className="grid grid-cols-2 gap-2">
+
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Grid className="w-4 h-4 text-gray-400" />
+                <h4 className="font-medium text-gray-700">Properties</h4>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {Object.entries(database.properties || {}).map(([key, value]) => (
-                  <div key={key} className="text-sm p-2 bg-gray-50 rounded">
-                    <span className="font-medium">{key}:</span>{" "}
-                    <span className="text-gray-600">{(value as any).type}</span>
+                  <div 
+                    key={key}
+                    className="px-3 py-2 bg-gray-50 rounded-lg text-sm hover:bg-gray-100 transition-colors"
+                  >
+                    <span className="font-medium text-gray-700">{key}</span>
+                    <span className="block text-xs text-gray-500 mt-1">
+                      {(value as any).type}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
+
             {database.url && (
               <a
                 href={database.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-block text-sm text-blue-500 hover:text-blue-600"
+                className="mt-6 inline-flex items-center gap-2 text-sm text-blue-500 hover:text-blue-600 transition-colors"
               >
-                Open in Notion →
+                <span>Open in Notion</span>
+                <ExternalLink className="w-4 h-4" />
               </a>
             )}
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
