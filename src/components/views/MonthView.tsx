@@ -25,6 +25,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { TaskModal } from "@/components/TaskModal"
 
 interface DashboardProps {
   token: string;
@@ -164,6 +165,8 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
   const [businessHours, setBusinessHours] = useState(true)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(initialProjectId)
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   const { data: tasks, isLoading: tasksLoading } = useTasks(token, selectedProjectId)
   const { data: sections = [], isLoading: isLoadingSections } = useSections(token, selectedProjectId || "")
@@ -267,6 +270,11 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
     } catch (error) {
       toast.error("Failed to delete task");
     }
+  };
+
+  const handleTaskClick = (task: any) => {
+    setSelectedTask(task);
+    setIsTaskModalOpen(true);
   };
 
   useEffect(() => {
@@ -413,12 +421,13 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
                     </h3>
                     <div className="space-y-4">
                       {overdueTasks.map((task) => (
-                        <TaskItem 
-                          key={task.id} 
-                          task={task}
-                          project={projects?.find((p) => p.id === task.project_id)}
-                          labels={labels}
-                        />
+                        <div key={task.id} onClick={() => handleTaskClick(task)} className="cursor-pointer">
+                          <TaskItem 
+                            task={task}
+                            project={projects?.find((p) => p.id === task.project_id)}
+                            labels={labels}
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -432,12 +441,13 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
                     </h3>
                     <div className="space-y-4">
                       {todayTasks.map((task) => (
-                        <TaskItem 
-                          key={task.id} 
-                          task={task}
-                          project={projects?.find((p) => p.id === task.project_id)}
-                          labels={labels}
-                        />
+                        <div key={task.id} onClick={() => handleTaskClick(task)} className="cursor-pointer">
+                          <TaskItem 
+                            task={task}
+                            project={projects?.find((p) => p.id === task.project_id)}
+                            labels={labels}
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -452,12 +462,13 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
                     <ScrollArea className="h-[400px]">
                       <div className="space-y-4 pr-4">
                         {upcomingTasks.map((task) => (
-                          <TaskItem 
-                            key={task.id} 
-                            task={task}
-                            project={projects?.find((p) => p.id === task.project_id)}
-                            labels={labels}
-                          />
+                          <div key={task.id} onClick={() => handleTaskClick(task)} className="cursor-pointer">
+                            <TaskItem 
+                              task={task}
+                              project={projects?.find((p) => p.id === task.project_id)}
+                              labels={labels}
+                            />
+                          </div>
                         ))}
                       </div>
                     </ScrollArea>
@@ -506,6 +517,14 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
         setIsEditing={setIsEditing}
         handleSave={handleSave}
         handleDelete={handleDelete}
+      />
+
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onOpenChange={setIsTaskModalOpen}
+        task={selectedTask}
+        project={projects?.find((p) => p.id === selectedTask?.project_id)}
+        labels={labels}
       />
     </motion.div>
   )
