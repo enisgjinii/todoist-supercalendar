@@ -1,12 +1,19 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-import { KeyRound, NotebookPen, Sparkles, Eye, EyeOff } from "lucide-react";
+import { KeyRound, NotebookPen, Sparkles, Eye, EyeOff, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface TokenInputProps {
   onTokenSubmit: (tokens: { todoistToken: string; notionToken: string }) => void;
@@ -29,8 +36,8 @@ export const TokenInput = ({ onTokenSubmit }: TokenInputProps) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800">
-      <motion.div
+    <div className="min-h-screen flex flex-col items-center justify-center  from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800">
+      <motion.div              
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md px-4"
@@ -118,12 +125,34 @@ export const TokenInput = ({ onTokenSubmit }: TokenInputProps) => {
           <div className="mt-6 text-center">
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Need help finding your tokens?{" "}
-              <a
-                href="#"
-                className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 underline"
-              >
-                View Guide
-              </a>
+              <Dialog>
+                <DialogTrigger className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 underline flex items-center gap-1">
+                  View Guide <HelpCircle className="h-4 w-4 inline-block" />
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>API Token Guide</DialogTitle>
+                    <DialogDescription>
+                      Follow these steps to find your Todoist and Notion API tokens.
+                      <br />
+                      <br />
+                      <b>Todoist API Token:</b>
+                      <ol className="list-decimal pl-5 mt-2">
+                        <li>Log in to your Todoist account on the web.</li>
+                        <li>Go to Settings > Integrations.</li>
+                        <li>Copy the API token.</li>
+                      </ol>
+                      <br />
+                      <b>Notion API Token:</b>
+                      <ol className="list-decimal pl-5 mt-2">
+                        <li>Log in to your Notion account on the web.</li>
+                        <li>Create a new integration (or use an existing one).</li>
+                        <li>Copy the internal integration token.</li>
+                      </ol>
+                    </DialogDescription>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
             </p>
           </div>
         </Card>

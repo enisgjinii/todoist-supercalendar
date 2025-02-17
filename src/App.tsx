@@ -17,10 +17,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="flex justify-between items-center p-4 bg-white dark:bg-gray-900 text-black dark:text-white">
-            <h1 className="text-xl font-bold">Todoist SuperCalendar</h1>
-            <DarkModeToggle />
-          </div>
+         
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="*" element={<NotFound />} />

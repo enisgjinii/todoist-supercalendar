@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -11,10 +10,13 @@ import {
   Settings,
   User,
   Star,
-  CircleUserRound
+  CircleUserRound,
+  Home,
+  Layout
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
+import DarkModeToggle from "@/components/DarkModeToggle";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -44,7 +46,13 @@ export const Sidebar = ({
   const { data: user } = useUserProfile(todoistToken);
 
   return (
-    <div className="flex flex-col h-full">
+    <motion.div 
+      initial={{ x: -300 }}
+      animate={{ x: isOpen ? 0 : -300 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-col h-full bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 w-72"
+    >
+      {/* Header */}
       <div className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
@@ -58,15 +66,16 @@ export const Sidebar = ({
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
-          className="hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          className="hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center gap-3 mb-4">
-          <Avatar className="h-10 w-10">
+      {/* User Profile */}
+      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 ring-2 ring-purple-500/20">
             <AvatarImage src={user?.avatar_url || undefined} />
             <AvatarFallback>
               <User className="h-5 w-5" />
@@ -79,34 +88,36 @@ export const Sidebar = ({
         </div>
       </div>
 
-      <nav className="flex-1 px-2 py-4 overflow-y-auto">
-        <div className="mb-6 space-y-4">
-          <div className="px-3">
-            <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 flex items-center">
-              <Star className="h-4 w-4 mr-2 text-purple-500" />
-              VIEWS
-            </h3>
-          </div>
-          <div className="space-y-1 px-2">
-            <Button
-              variant={view === "month" ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => onViewChange("month")}
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              Calendar
-            </Button>
-          </div>
+      {/* Navigation */}
+      <nav className="flex-1 px-2 py-4 space-y-6 overflow-y-auto">
+        {/* Main Navigation */}
+        <div className="space-y-1">
+          <Button
+            variant={view === "dashboard" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onViewChange("dashboard")}
+          >
+            <Home className="mr-2 h-4 w-4" />
+            Dashboard
+          </Button>
+          <Button
+            variant={view === "month" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onViewChange("month")}
+          >
+            <Calendar className="mr-2 h-4 w-4" />
+            Calendar
+          </Button>
         </div>
 
-        <div className="mb-6 space-y-4">
+        {/* Integrations Section */}
+        <div className="space-y-4">
           <div className="px-3">
-            <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 flex items-center">
-              <Database className="h-4 w-4 mr-2 text-blue-500" />
-              INTEGRATIONS
+            <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              Integrations
             </h3>
           </div>
-          <div className="space-y-1 px-2">
+          <div className="space-y-1">
             <Button
               variant={view === "notion-databases" ? "default" : "ghost"}
               className="w-full justify-start"
@@ -115,30 +126,38 @@ export const Sidebar = ({
               <Database className="mr-2 h-4 w-4" />
               Notion Databases
             </Button>
+            <Button
+              variant={view === "todoist" ? "default" : "ghost"}
+              className="w-full justify-start"
+              onClick={() => onViewChange("todoist")}
+            >
+              <Layout className="mr-2 h-4 w-4" />
+              Todoist Tasks
+            </Button>
           </div>
         </div>
-
-        <Separator className="my-4" />
-
-        <div className="space-y-1 px-2">
-          <Button
-            variant={view === "settings" ? "default" : "ghost"}
-            className="w-full justify-start"
-            onClick={() => onViewChange("settings")}
-          >
-            <CircleUserRound className="mr-2 h-4 w-4" />
-            Profile & Settings
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-            onClick={onLogout}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
-        </div>
       </nav>
-    </div>
+
+      {/* Footer Actions */}
+      <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+        <DarkModeToggle />
+        <Button
+          variant={view === "settings" ? "default" : "ghost"}
+          className="w-full justify-start"
+          onClick={() => onViewChange("settings")}
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          Settings
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50"
+          onClick={onLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Logout
+        </Button>
+      </div>
+    </motion.div>
   );
 };
