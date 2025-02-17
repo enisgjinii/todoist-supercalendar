@@ -147,7 +147,7 @@ const TaskItem = ({ task, project, labels }: { task: any; project: any; labels: 
   );
 };
 
-export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
+export const MonthView = ({ token, selectedProjectId: initialProjectId }: DashboardProps) => {
   const [viewOption, setViewOption] = useState<"dashboard" | "calendar">("dashboard")
   const [searchTerm, setSearchTerm] = useState("")
   const [priorityFilter, setPriorityFilter] = useState<number | null>(null)
@@ -162,11 +162,38 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
   const [calendarView, setCalendarView] = useState("dayGridMonth")
   const [weekendsVisible, setWeekendsVisible] = useState(true)
   const [businessHours, setBusinessHours] = useState(true)
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(initialProjectId)
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([])
 
-  const { data: tasks, isLoading: tasksLoading, error: tasksError } = useTasks(token, selectedProjectId)
-  const { data: sections = [], isLoading: sectionsLoading } = useSections(token, selectedProjectId || "")
-  const { data: projects, isLoading: projectsLoading } = useProjects(token)
-  const { data: labels, isLoading: labelsLoading } = useLabels(token)
+  const { data: tasks, isLoading: tasksLoading } = useTasks(token, selectedProjectId)
+  const { data: sections = [] } = useSections(token, selectedProjectId || "")
+  const { data: projects } = useProjects(token)
+  const { data: labels } = useLabels(token)
+
+  const handleProjectSelect = (projectId: string | null) => {
+    setSelectedProjectId(projectId);
+  };
+
+  const handleLabelSelect = (labelId: string) => {
+    setSelectedLabels(prev => 
+      prev.includes(labelId)
+        ? prev.filter(id => id !== labelId)
+        : [...prev, labelId]
+    );
+  };
+
+  const filteredTasks = tasks?.filter(task => {
+    const matchSearch = searchTerm
+      ? task.content.toLowerCase().includes(searchTerm.toLowerCase())
+      : true;
+    const matchPriority = priorityFilter 
+      ? task.priority === priorityFilter 
+      : true;
+    const matchLabels = selectedLabels.length > 0
+      ? task.labels?.some(label => selectedLabels.includes(label))
+      : true;
+    return matchSearch && matchPriority && matchLabels;
+  }) || [];
 
   const handleTaskSelection = (taskId: string) => {
     setSelectedTasks(prev => 
@@ -278,7 +305,7 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
     }
   );
 
-  if (tasksError || tasksLoading || sectionsLoading || projectsLoading || labelsLoading) {
+  if (tasksLoading || sectionsLoading || projectsLoading || labelsLoading) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-4">
         <Skeleton className="h-[100px] w-full" />
@@ -290,14 +317,6 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
     ...section,
     tasks: tasks?.filter((task: Task) => task.section_id === section.id) || []
   }));
-
-  const filteredTasks = tasks?.filter(task => {
-    const matchSearch = searchTerm
-      ? task.content.toLowerCase().includes(searchTerm.toLowerCase())
-      : true
-    const matchPriority = priorityFilter ? task.priority === priorityFilter : true
-    return matchSearch && matchPriority
-  }) || [];
 
   const overdueTasks = filteredTasks.filter(t => {
     if (!t.due?.date) return false
@@ -370,6 +389,9 @@ export const MonthView = ({ token, selectedProjectId }: DashboardProps) => {
         selectedProjectId={selectedProjectId}
         projects={projects || []}
         labels={labels || []}
+        onProjectSelect={handleProjectSelect}
+        selectedLabels={selectedLabels}
+        onLabelSelect={handleLabelSelect}
       />
 
       {viewOption === "dashboard" ? (
