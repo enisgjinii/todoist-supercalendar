@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Mail, Clock, Award, Calendar } from "lucide-react";
+import { User, Mail, Clock, Award, Calendar, Moon, Sun, Monitor } from "lucide-react";
 import { format } from "date-fns";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface SettingsProps {
   todoistToken: string;
@@ -13,6 +17,14 @@ interface SettingsProps {
 
 export const Settings = ({ todoistToken }: SettingsProps) => {
   const { data: user, isLoading } = useUserProfile(todoistToken);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   if (isLoading) {
     return (
@@ -94,6 +106,42 @@ export const Settings = ({ todoistToken }: SettingsProps) => {
                   {user?.join_date && format(new Date(user.join_date), "PPP")}
                 </div>
               </div>
+            </div>
+
+            <div className="pt-6 border-t dark:border-zinc-800">
+              <h3 className="text-lg font-medium mb-4">Theme Preferences</h3>
+              <RadioGroup value={theme} onValueChange={setTheme} className="grid grid-cols-3 gap-4">
+                <div>
+                  <RadioGroupItem value="light" id="light" className="peer sr-only" />
+                  <Label
+                    htmlFor="light"
+                    className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-white p-4 hover:bg-zinc-100 peer-data-[state=checked]:border-purple-600 dark:bg-zinc-900 dark:hover:bg-zinc-800 [&:has([data-state=checked])]:border-purple-600"
+                  >
+                    <Sun className="mb-2 h-6 w-6" />
+                    Light
+                  </Label>
+                </div>
+                <div>
+                  <RadioGroupItem value="dark" id="dark" className="peer sr-only" />
+                  <Label
+                    htmlFor="dark"
+                    className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-white p-4 hover:bg-zinc-100 peer-data-[state=checked]:border-purple-600 dark:bg-zinc-900 dark:hover:bg-zinc-800 [&:has([data-state=checked])]:border-purple-600"
+                  >
+                    <Moon className="mb-2 h-6 w-6" />
+                    Dark
+                  </Label>
+                </div>
+                <div>
+                  <RadioGroupItem value="system" id="system" className="peer sr-only" />
+                  <Label
+                    htmlFor="system"
+                    className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-white p-4 hover:bg-zinc-100 peer-data-[state=checked]:border-purple-600 dark:bg-zinc-900 dark:hover:bg-zinc-800 [&:has([data-state=checked])]:border-purple-600"
+                  >
+                    <Monitor className="mb-2 h-6 w-6" />
+                    System
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
           </div>
         </div>
