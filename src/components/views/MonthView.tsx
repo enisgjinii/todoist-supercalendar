@@ -166,9 +166,9 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
 
   const { data: tasks, isLoading: tasksLoading } = useTasks(token, selectedProjectId)
-  const { data: sections = [] } = useSections(token, selectedProjectId || "")
-  const { data: projects } = useProjects(token)
-  const { data: labels } = useLabels(token)
+  const { data: sections = [], isLoading: isLoadingSections } = useSections(token, selectedProjectId || "")
+  const { data: projects, isLoading: isLoadingProjects } = useProjects(token)
+  const { data: labels, isLoading: isLoadingLabels } = useLabels(token)
 
   const handleProjectSelect = (projectId: string | null) => {
     setSelectedProjectId(projectId);
@@ -305,7 +305,7 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
     }
   );
 
-  if (tasksLoading || sectionsLoading || projectsLoading || labelsLoading) {
+  if (tasksLoading || isLoadingSections || isLoadingProjects || isLoadingLabels) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-4">
         <Skeleton className="h-[100px] w-full" />
