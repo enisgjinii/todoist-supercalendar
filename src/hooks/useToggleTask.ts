@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -17,13 +18,19 @@ async function toggleTaskCompletion(token: string, taskId: string, completed: bo
     ? `https://api.todoist.com/rest/v2/tasks/${taskId}/close`
     : `https://api.todoist.com/rest/v2/tasks/${taskId}/reopen`;
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: defaultHeaders(token),
-  });
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: defaultHeaders(token),
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to update task status: ${response.statusText}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Failed to update task status: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error("Error toggling task:", error);
+    throw error;
   }
 }
 
@@ -34,7 +41,7 @@ interface ToggleTaskParams {
 }
 
 /**
- * Hook for toggling a task’s completion status.
+ * Hook for toggling a task's completion status.
  */
 export function useToggleTask() {
   const queryClient = useQueryClient();
@@ -43,12 +50,12 @@ export function useToggleTask() {
     mutationFn: ({ token, taskId, completed }: ToggleTaskParams) =>
       toggleTaskCompletion(token, taskId, completed),
     onSuccess: () => {
-      // Refresh the tasks query so the UI updates
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Task status updated.");
+      toast.success("Task status updated successfully");
     },
-    onError: () => {
-      toast.error("Failed to update task status.");
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update task status");
+      console.error("Task toggle error:", error);
     },
   });
 }

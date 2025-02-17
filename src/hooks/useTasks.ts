@@ -1,4 +1,4 @@
-// src/hooks/useTasks.ts
+
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -33,9 +33,10 @@ function defaultHeaders(token: string) {
   };
 }
 
-// Fetches all active tasks. If a projectId is specified, only tasks from that project are returned.
 async function fetchTasks(token: string, projectId?: string | null): Promise<TodoistTask[]> {
-  if (!token) return [];
+  if (!token) {
+    throw new Error("Authentication token is required");
+  }
 
   const baseUrl = "https://api.todoist.com/rest/v2/tasks";
   let url = baseUrl;
@@ -50,24 +51,44 @@ async function fetchTasks(token: string, projectId?: string | null): Promise<Tod
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch tasks: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
-    return response.json() as Promise<TodoistTask[]>;
+    const data = await response.json();
+    return data as TodoistTask[];
   } catch (error) {
     console.error("Error fetching tasks:", error);
-    toast.error("Failed to fetch tasks.");
+    if (error instanceof Error && error.message.includes("401")) {
+      toast.error("Authentication failed. Please check your API token.");
+    } else if (error instanceof Error && error.message.includes("429")) {
+      toast.error("Too many requests. Please try again later.");
+    } else {
+      toast.error("Failed to fetch tasks. Please try again.");
+    }
     throw error;
   }
 }
 
-// React Query hook
 export function useTasks(token: string, projectId?: string | null) {
   return useQuery({
     queryKey: ["tasks", token, projectId],
     queryFn: () => fetchTasks(token, projectId),
     enabled: !!token,
-    retry: 2,
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error instanceof Error && error.message.includes("401")) {
+        return false;
+      }
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
+    },
     staleTime: 30000,
+    onError: (error: Error) => {
+      if (error.message.includes("Network") || error.message.includes("ECONNREFUSED")) {
+        toast.error("Network error. Please check your internet connection.");
+      }
+      console.error("Tasks query error:", error);
+    },
   });
 }

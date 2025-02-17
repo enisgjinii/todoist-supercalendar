@@ -1,3 +1,4 @@
+
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
@@ -11,11 +12,38 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/notion/search", async (req, res) => {
+// Error handling middleware
+const errorHandler = (err, req, res, next) => {
+  console.error("Server error:", err);
+
+  // Handle Axios errors
+  if (err.isAxiosError) {
+    const status = err.response?.status || 500;
+    const message = err.response?.data?.message || "An error occurred with the external service";
+    return res.status(status).json({
+      error: message,
+      timestamp: new Date().toISOString(),
+      requestId: Math.random().toString(36).substring(7)
+    });
+  }
+
+  // Handle other errors
+  res.status(500).json({
+    error: err.message || "Internal server error",
+    timestamp: new Date().toISOString(),
+    requestId: Math.random().toString(36).substring(7)
+  });
+};
+
+app.get("/api/notion/search", async (req, res, next) => {
   try {
+    if (!process.env.NOTION_TOKEN) {
+      throw new Error("Notion token is not configured");
+    }
+
     const response = await axios.post("https://api.notion.com/v1/search", {
       filter: {
-        value: "database",  // Changed from "page" to "database"
+        value: "database",
         property: "object"
       },
       sort: {
@@ -35,16 +63,21 @@ app.get("/api/notion/search", async (req, res) => {
     res.json(response.data);
     
   } catch (error) {
-    console.error("Server error:", error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data || error.message
-    });
+    next(error);
   }
 });
 
-app.get("/api/notion/database/:id", async (req, res) => {
+app.get("/api/notion/database/:id", async (req, res, next) => {
   try {
+    if (!process.env.NOTION_TOKEN) {
+      throw new Error("Notion token is not configured");
+    }
+
     const databaseId = req.params.id;
+    if (!databaseId) {
+      throw new Error("Database ID is required");
+    }
+
     console.log(`[Notion API] Attempting to fetch database with ID: ${databaseId}`);
     console.log(`[Notion API] Request timestamp: ${new Date().toISOString()}`);
 
@@ -72,13 +105,13 @@ app.get("/api/notion/database/:id", async (req, res) => {
     console.error("- Response Data:", JSON.stringify(error.response?.data, null, 2));
     console.error("- Stack Trace:", error.stack);
 
-    res.status(error.response?.status || 500).json({
-      error: error.response?.data || error.message,
-      timestamp: new Date().toISOString(),
-      requestId: Math.random().toString(36).substring(7)
-    });
+    next(error);
   }
 });
+
+// Apply error handling middleware
+app.use(errorHandler);
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
