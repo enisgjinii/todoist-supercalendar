@@ -1,13 +1,14 @@
+
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Sparkles, Clock, Calendar, CheckCircle2, Target, Circle, MessageSquare, AlertCircle, Link as LinkIcon } from "lucide-react"
+import { Sparkles } from "lucide-react"
 import { useTasks } from "@/hooks/useTasks"
 import { useSections } from "@/hooks/useSections"
 import { useProjects } from "@/hooks/useProjects"
 import { useLabels } from "@/hooks/useLabels"
-import { format, parseISO, isToday, isAfter, isPast } from "date-fns"
+import { parseISO, isToday, isAfter, isPast } from "date-fns"
 import { CalendarControls } from "./calendar/CalendarControls"
 import { EventDialog } from "./calendar/EventDialog"
 import { getCalendarOptions } from "./calendar/calendarConfig"
@@ -15,138 +16,15 @@ import { StatsCards } from "./dashboard/StatsCards"
 import { SearchControls } from "./dashboard/SearchControls"
 import { ProjectSelector } from "./dashboard/ProjectSelector"
 import { ViewToggle } from "./dashboard/ViewToggle"
-import { toast } from "sonner"
+import { TaskList } from "./dashboard/TaskList"
+import { TaskModal } from "@/components/TaskModal"
 import FullCalendar from '@fullcalendar/react'
 import { calendarStyles } from "./calendar/styles"
-import { Badge } from "@/components/ui/badge"
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { TaskModal } from "@/components/TaskModal"
 
 interface DashboardProps {
-  token: string;
-  selectedProjectId: string | null;
+  token: string
+  selectedProjectId: string | null
 }
-
-interface Section {
-  id: string;
-  name: string;
-  project_id: string;
-  order: number;
-  tasks?: any[];
-}
-
-interface Task {
-  id: string;
-  content: string;
-  description?: string;
-  project_id: string;
-  section_id: string | null;
-  parent_id: string | null;
-  due?: {
-    date: string;
-    datetime: string | null;
-  };
-  is_completed: boolean;
-  labels: string[];
-  priority?: number;
-}
-
-const TaskItem = ({ task, project, labels }: { task: any; project: any; labels: any[] }) => {
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-sm hover:shadow-md transition-all"
-    >
-      <div className="flex items-start gap-4">
-        <div className="mt-1">
-          {task.is_completed ? (
-            <CheckCircle2 size={20} className="text-green-500 dark:text-green-400" />
-          ) : (
-            <Circle size={20} className="text-zinc-300 dark:text-zinc-600" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <h3 className="font-medium text-zinc-900 dark:text-zinc-100 break-words cursor-help">
-                {task.content}
-              </h3>
-            </HoverCardTrigger>
-            <HoverCardContent>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-sm">Created {format(new Date(task.created_at), "PPP")}</span>
-                </div>
-                {project && (
-                  <div className="flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    <span className="text-sm">Project: {project.name}</span>
-                  </div>
-                )}
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-
-          {task.description && (
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              {task.description}
-            </p>
-          )}
-
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
-            {project && (
-              <Badge variant="secondary" className="text-xs">
-                <Target size={12} className="mr-1" />
-                {project.name}
-              </Badge>
-            )}
-            {task.due && (
-              <Badge variant="outline" className="text-xs">
-                <Clock size={12} className="mr-1" />
-                {format(new Date(task.due.datetime || task.due.date), "PPP")}
-              </Badge>
-            )}
-            {task.labels?.map((labelId: string) => {
-              const label = labels?.find((l: any) => l.name === labelId);
-              return (
-                <Badge key={labelId} variant="outline" className="text-xs">
-                  {label?.name || labelId}
-                </Badge>
-              );
-            })}
-            {task.comment_count > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                <MessageSquare size={12} className="mr-1" />
-                {task.comment_count}
-              </Badge>
-            )}
-          </div>
-
-          {task.url && (
-            <a 
-              href={task.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="mt-2 text-xs text-blue-500 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-            >
-              <LinkIcon size={12} />
-              View in Todoist
-            </a>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
 
 export const MonthView = ({ token, selectedProjectId: initialProjectId }: DashboardProps) => {
   const [viewOption, setViewOption] = useState<"dashboard" | "calendar">("dashboard")
@@ -165,123 +43,64 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
   const [businessHours, setBusinessHours] = useState(true)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(initialProjectId)
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
-  const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
 
   const { data: tasks, isLoading: tasksLoading } = useTasks(token, selectedProjectId)
   const { data: sections = [], isLoading: isLoadingSections } = useSections(token, selectedProjectId || "")
-  const { data: projects, isLoading: isLoadingProjects } = useProjects(token)
-  const { data: labels, isLoading: isLoadingLabels } = useLabels(token)
+  const { data: projects = [], isLoading: isLoadingProjects } = useProjects(token)
+  const { data: labels = [], isLoading: isLoadingLabels } = useLabels(token)
 
   const handleProjectSelect = (projectId: string | null) => {
-    setSelectedProjectId(projectId);
-  };
+    setSelectedProjectId(projectId)
+  }
 
   const handleLabelSelect = (labelId: string) => {
     setSelectedLabels(prev => 
       prev.includes(labelId)
         ? prev.filter(id => id !== labelId)
         : [...prev, labelId]
-    );
-  };
+    )
+  }
+
+  const handleTaskClick = (task: any) => {
+    setSelectedTask(task)
+    setIsTaskModalOpen(true)
+  }
 
   const filteredTasks = tasks?.filter(task => {
     const matchSearch = searchTerm
       ? task.content.toLowerCase().includes(searchTerm.toLowerCase())
-      : true;
+      : true
     const matchPriority = priorityFilter 
       ? task.priority === priorityFilter 
-      : true;
+      : true
     const matchLabels = selectedLabels.length > 0
       ? task.labels?.some(label => selectedLabels.includes(label))
-      : true;
-    return matchSearch && matchPriority && matchLabels;
-  }) || [];
+      : true
+    return matchSearch && matchPriority && matchLabels
+  }) || []
 
-  const handleTaskSelection = (taskId: string) => {
-    setSelectedTasks(prev => 
-      prev.includes(taskId) 
-        ? prev.filter(id => id !== taskId)
-        : [...prev, taskId]
-    );
-  };
+  const overdueTasks = filteredTasks.filter(t => {
+    if (!t.due?.date) return false
+    return isPast(parseISO(t.due.datetime || t.due.date)) && !t.is_completed
+  })
 
-  const handleInlineEdit = (taskId: string) => {
-    toast.info(`Editing task ${taskId}`);
-  };
+  const todayTasks = filteredTasks.filter(t => {
+    if (!t.due?.date) return false
+    return isToday(parseISO(t.due.datetime || t.due.date))
+  })
 
-  const handleBulkComplete = async () => {
-    try {
-      toast.success(`Completed ${selectedTasks.length} tasks`);
-      setSelectedTasks([]);
-    } catch (error) {
-      toast.error("Failed to complete tasks");
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    try {
-      toast.success(`Deleted ${selectedTasks.length} tasks`);
-      setSelectedTasks([]);
-    } catch (error) {
-      toast.error("Failed to delete tasks");
-    }
-  };
-
-  const handleEventClick = (clickInfo: any) => {
-    const event = clickInfo.event;
-    setSelectedEvent(event);
-    setEditedTitle(event.title);
-    setEditedDescription(event.extendedProps.description || "");
-    setIsEventDialogOpen(true);
-  };
-
-  const handleEventMouseEnter = (mouseEnterInfo: any) => {
-    const el = mouseEnterInfo.el;
-    el.style.transform = 'scale(1.05)';
-    el.style.zIndex = '1000';
-    el.style.transition = 'all 0.2s ease';
-  };
-
-  const handleEventMouseLeave = (mouseLeaveInfo: any) => {
-    const el = mouseLeaveInfo.el;
-    el.style.transform = 'scale(1)';
-    el.style.zIndex = 'auto';
-  };
-
-  const handleDateClick = (arg: any) => {
-    toast.info(`Selected date: ${format(new Date(arg.date), "PPP")}`);
-  };
-
-  const handleSave = async () => {
-    try {
-      setIsEditing(false);
-      setIsEventDialogOpen(false);
-      toast.success("Task updated successfully");
-    } catch (error) {
-      toast.error("Failed to update task");
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      setIsEventDialogOpen(false);
-      toast.success("Task deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete task");
-    }
-  };
-
-  const handleTaskClick = (task: any) => {
-    setSelectedTask(task);
-    setIsTaskModalOpen(true);
-  };
+  const upcomingTasks = filteredTasks.filter(t => {
+    if (!t.due?.date) return false
+    return isAfter(parseISO(t.due.datetime || t.due.date), new Date())
+  })
 
   useEffect(() => {
     if (tasks) {
       const events = tasks
-        .filter((t: Task) => t.due)
-        .map((task: Task) => ({
+        .filter((t: any) => t.due)
+        .map((task: any) => ({
           id: task.id,
           title: task.content,
           start: task.due?.datetime || task.due?.date,
@@ -300,19 +119,6 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
     }
   }, [tasks])
 
-  const calendarOptions = getCalendarOptions(
-    calendarView,
-    weekendsVisible,
-    businessHours,
-    calendarEvents,
-    {
-      eventClick: handleEventClick,
-      eventMouseEnter: handleEventMouseEnter,
-      eventMouseLeave: handleEventMouseLeave,
-      dateClick: handleDateClick,
-    }
-  );
-
   if (tasksLoading || isLoadingSections || isLoadingProjects || isLoadingLabels) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-4">
@@ -321,31 +127,24 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
     )
   }
 
-  const sectionsWithTasks = sections.map((section: Section) => ({
-    ...section,
-    tasks: tasks?.filter((task: Task) => task.section_id === section.id) || []
-  }));
-
-  const overdueTasks = filteredTasks.filter(t => {
-    if (!t.due?.date) return false
-    return isPast(parseISO(t.due.datetime || t.due.date)) && !t.is_completed
-  });
-
-  const todayTasks = filteredTasks.filter(t => {
-    if (!t.due?.date) return false
-    return isToday(parseISO(t.due.datetime || t.due.date))
-  });
-
-  const upcomingTasks = filteredTasks.filter(t => {
-    if (!t.due?.date) return false
-    return isAfter(parseISO(t.due.datetime || t.due.date), new Date())
-  });
-
-  const completedTasks = filteredTasks.filter(t => t.is_completed);
-
-  const totalTasksCount = filteredTasks.length;
-  const overdueTasksCount = overdueTasks.length;
-  const completedTasksCount = completedTasks.length;
+  const calendarOptions = getCalendarOptions(
+    calendarView,
+    weekendsVisible,
+    businessHours,
+    calendarEvents,
+    {
+      eventClick: (info) => setSelectedEvent(info.event),
+      eventMouseEnter: (info) => {
+        info.el.style.transform = 'scale(1.05)'
+        info.el.style.zIndex = '1000'
+        info.el.style.transition = 'all 0.2s ease'
+      },
+      eventMouseLeave: (info) => {
+        info.el.style.transform = 'scale(1)'
+        info.el.style.zIndex = 'auto'
+      },
+    }
+  )
 
   return (
     <motion.div 
@@ -385,9 +184,9 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
 
         <div className="mt-6">
           <StatsCards
-            totalTasksCount={totalTasksCount}
-            overdueTasksCount={overdueTasksCount}
-            completedTasksCount={completedTasksCount}
+            totalTasksCount={filteredTasks.length}
+            overdueTasksCount={overdueTasks.length}
+            completedTasksCount={filteredTasks.filter(t => t.is_completed).length}
             todayTasksCount={todayTasks.length}
           />
         </div>
@@ -395,8 +194,8 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
 
       <ProjectSelector
         selectedProjectId={selectedProjectId}
-        projects={projects || []}
-        labels={labels || []}
+        projects={projects}
+        labels={labels}
         onProjectSelect={handleProjectSelect}
         selectedLabels={selectedLabels}
         onLabelSelect={handleLabelSelect}
@@ -405,85 +204,42 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
       {viewOption === "dashboard" ? (
         <Card className="p-6">
           <div className="space-y-6">
-            {tasksLoading ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-24 w-full" />
-                ))}
+            {showOverdue && (
+              <TaskList
+                title="Overdue Tasks"
+                icon="overdue"
+                tasks={overdueTasks}
+                projects={projects}
+                labels={labels}
+                onTaskClick={handleTaskClick}
+              />
+            )}
+
+            <TaskList
+              title="Today's Tasks"
+              icon="today"
+              tasks={todayTasks}
+              projects={projects}
+              labels={labels}
+              onTaskClick={handleTaskClick}
+            />
+
+            <TaskList
+              title="Upcoming Tasks"
+              icon="upcoming"
+              tasks={upcomingTasks}
+              projects={projects}
+              labels={labels}
+              onTaskClick={handleTaskClick}
+            />
+
+            {!overdueTasks.length && !todayTasks.length && !upcomingTasks.length && (
+              <div className="text-center py-12">
+                <p className="text-zinc-500 dark:text-zinc-400">No tasks found</p>
+                <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-2">
+                  Try adjusting your filters or create new tasks
+                </p>
               </div>
-            ) : (
-              <>
-                {showOverdue && overdueTasks.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold text-red-500 dark:text-red-400 mb-4 flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5" />
-                      Overdue Tasks
-                    </h3>
-                    <div className="space-y-4">
-                      {overdueTasks.map((task) => (
-                        <div key={task.id} onClick={() => handleTaskClick(task)} className="cursor-pointer">
-                          <TaskItem 
-                            task={task}
-                            project={projects?.find((p) => p.id === task.project_id)}
-                            labels={labels}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {todayTasks.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold text-purple-500 dark:text-purple-400 mb-4 flex items-center gap-2">
-                      <Clock className="h-5 w-5" />
-                      Today's Tasks
-                    </h3>
-                    <div className="space-y-4">
-                      {todayTasks.map((task) => (
-                        <div key={task.id} onClick={() => handleTaskClick(task)} className="cursor-pointer">
-                          <TaskItem 
-                            task={task}
-                            project={projects?.find((p) => p.id === task.project_id)}
-                            labels={labels}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {upcomingTasks.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold text-blue-500 dark:text-blue-400 mb-4 flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      Upcoming Tasks
-                    </h3>
-                    <ScrollArea className="h-[400px]">
-                      <div className="space-y-4 pr-4">
-                        {upcomingTasks.map((task) => (
-                          <div key={task.id} onClick={() => handleTaskClick(task)} className="cursor-pointer">
-                            <TaskItem 
-                              task={task}
-                              project={projects?.find((p) => p.id === task.project_id)}
-                              labels={labels}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                )}
-
-                {!overdueTasks.length && !todayTasks.length && !upcomingTasks.length && (
-                  <div className="text-center py-12">
-                    <p className="text-zinc-500 dark:text-zinc-400">No tasks found</p>
-                    <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-2">
-                      Try adjusting your filters or create new tasks
-                    </p>
-                  </div>
-                )}
-              </>
             )}
           </div>
         </Card>
@@ -515,8 +271,11 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
         editedDescription={editedDescription}
         setEditedDescription={setEditedDescription}
         setIsEditing={setIsEditing}
-        handleSave={handleSave}
-        handleDelete={handleDelete}
+        handleSave={() => {
+          setIsEditing(false)
+          setIsEventDialogOpen(false)
+        }}
+        handleDelete={() => setIsEventDialogOpen(false)}
       />
 
       <TaskModal
