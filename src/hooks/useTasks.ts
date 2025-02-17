@@ -84,11 +84,15 @@ export function useTasks(token: string, projectId?: string | null) {
       return failureCount < 2;
     },
     staleTime: 30000,
-    onError: (error: Error) => {
-      if (error.message.includes("Network") || error.message.includes("ECONNREFUSED")) {
-        toast.error("Network error. Please check your internet connection.");
+    meta: {
+      onSettled: (_data: TodoistTask[] | undefined, error: Error | null) => {
+        if (error) {
+          if (error.message.includes("Network") || error.message.includes("ECONNREFUSED")) {
+            toast.error("Network error. Please check your internet connection.");
+          }
+          console.error("Tasks query error:", error);
+        }
       }
-      console.error("Tasks query error:", error);
-    },
+    }
   });
 }
