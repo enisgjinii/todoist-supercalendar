@@ -143,6 +143,10 @@ export const MonthView = ({ token, selectedProjectId: initialProjectId }: Dashbo
         info.el.style.transform = 'scale(1)'
         info.el.style.zIndex = 'auto'
       },
+      dateClick: (info) => {
+        // Handle date click event
+        console.log('Date clicked:', info.date)
+      }
     }
   )
 
